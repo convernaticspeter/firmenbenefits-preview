@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="de-AT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>firmenbenefits.at – Regionale Vorteile für eure Mitarbeiter</title>
+  <meta name="description" content="firmenbenefits.at bringt Betriebsräte und regionale Anbieter zusammen: laufend neue Mitarbeitervorteile ohne kompliziertes Portal." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta property="og:title" content="firmenbenefits.at – Regionale Vorteile statt Werbebudget" />
+  <meta property="og:description" content="Einfaches Benefit-Programm für Betriebsräte: regionale Angebote, flexible Nachweise, monatlich neue Vorteile." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,650&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #11131a;
+      --muted: #5d6472;
+      --soft: #f7f1e7;
+      --cream: #fffaf1;
+      --line: rgba(17,19,26,.12);
+      --red: #e7332a;
+      --red-dark: #bd2019;
+      --green: #1d8b5f;
+      --blue: #243f8f;
+      --yellow: #ffc843;
+      --shadow: 0 26px 80px rgba(17, 19, 26, .14);
+      --radius: 28px;
+      --site: 1180px;
+      font-family: Archivo, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--cream); color: var(--ink); font-size: 17px; line-height: 1.55; }
+    a { color: inherit; text-decoration: none; }
+    .site-header { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(18px); background: rgba(255,250,241,.88); border-bottom: 1px solid var(--line); }
+    .nav { width: min(var(--site), calc(100% - 36px)); margin: 0 auto; height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: -.03em; }
+    .brand-mark { width: 42px; height: 42px; border-radius: 14px; display:grid; place-items:center; background: var(--red); color: white; box-shadow: 0 12px 28px rgba(231,51,42,.22); }
+    .brand small { display:block; font-size: 12px; color: var(--muted); letter-spacing: .04em; font-weight:700; text-transform: uppercase; }
+    .nav-links { display:flex; gap: 22px; font-size: 14px; font-weight: 700; color: #343945; }
+    .nav-cta, .btn { display:inline-flex; align-items:center; justify-content:center; gap: 10px; border-radius: 999px; border: 0; cursor:pointer; font: 800 15px/1 Archivo, sans-serif; padding: 15px 20px; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+    .nav-cta, .btn.primary { background: var(--red); color:white; box-shadow: 0 14px 34px rgba(231,51,42,.24); }
+    .btn.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(17,19,26,.08); }
+    .nav-cta:hover, .btn:hover { transform: translateY(-2px); }
+    main { overflow:hidden; }
+    .section { width: min(var(--site), calc(100% - 36px)); margin: 0 auto; padding: clamp(64px, 8vw, 108px) 0; }
+    .hero { position: relative; padding: clamp(56px, 9vw, 110px) 0 70px; }
+    .hero::before { content:""; position:absolute; inset:0; background: radial-gradient(circle at 15% 10%, rgba(255,200,67,.38), transparent 34%), radial-gradient(circle at 88% 18%, rgba(231,51,42,.18), transparent 30%), linear-gradient(180deg, #fffaf1 0%, #f6eddf 100%); z-index:-2; }
+    .hero-grid { width:min(var(--site), calc(100% - 36px)); margin:0 auto; display:grid; grid-template-columns: minmax(0, 1.02fr) minmax(360px, .78fr); gap: clamp(36px, 6vw, 76px); align-items:center; }
+    .eyebrow { display:inline-flex; align-items:center; gap:9px; color: var(--red-dark); font-weight: 800; text-transform: uppercase; letter-spacing:.08em; font-size: 12px; margin-bottom: 18px; }
+    .eyebrow::before { content:""; width: 34px; height: 2px; background: var(--red); border-radius:99px; }
+    h1, h2, h3 { margin:0; line-height: .98; letter-spacing:-.055em; }
+    h1 { font-size: clamp(48px, 8.6vw, 104px); max-width: 860px; }
+    h2 { font-size: clamp(34px, 5.2vw, 68px); max-width: 820px; }
+    h3 { font-size: clamp(22px, 2vw, 30px); letter-spacing:-.035em; line-height:1.05; }
+    .lead { font-family: "Source Serif 4", Georgia, serif; font-size: clamp(22px, 2.4vw, 33px); line-height: 1.22; max-width: 750px; margin: 26px 0 30px; color: #292d37; }
+    .hero-actions { display:flex; gap: 12px; flex-wrap:wrap; align-items:center; }
+    .hero-note { margin-top: 18px; color: var(--muted); font-size: 14px; font-weight: 700; }
+    .benefit-card { background:#151821; color:white; border-radius: 36px; box-shadow: var(--shadow); padding: 28px; position:relative; isolation:isolate; overflow:hidden; min-height: 560px; display:flex; flex-direction:column; justify-content:space-between; }
+    .benefit-card::before { content:""; position:absolute; inset:-40px; background: radial-gradient(circle at 22% 18%, rgba(255,200,67,.38), transparent 24%), radial-gradient(circle at 80% 70%, rgba(231,51,42,.45), transparent 28%); z-index:-1; }
+    .mock-window { background: rgba(255,255,255,.92); color: var(--ink); border-radius: 24px; padding: 22px; box-shadow: 0 28px 80px rgba(0,0,0,.2); transform: rotate(-2deg); }
+    .mock-top { display:flex; gap:7px; margin-bottom: 18px; }
+    .dot { width:10px; height:10px; border-radius:50%; background: #d9dde7; }
+    .offer-row { display:grid; grid-template-columns: 48px 1fr auto; align-items:center; gap: 14px; padding: 13px 0; border-top: 1px solid rgba(17,19,26,.1); }
+    .icon { width:48px; height:48px; border-radius: 16px; display:grid; place-items:center; background: var(--soft); font-size:22px; }
+    .offer-row strong { display:block; line-height:1.1; }
+    .tag { font-size:12px; font-weight:800; color: var(--green); background: rgba(29,139,95,.12); border-radius:999px; padding:6px 8px; white-space:nowrap; }
+    .card-caption { font-size: 20px; line-height:1.15; font-weight:800; max-width: 300px; }
+    .stat-strip { width:min(var(--site), calc(100% - 36px)); margin:-36px auto 0; position:relative; z-index:2; display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .stat { background:white; border:1px solid var(--line); border-radius:22px; padding:20px 22px; box-shadow: 0 18px 55px rgba(17,19,26,.08); }
+    .stat strong { display:block; font-size: 24px; letter-spacing:-.04em; }
+    .stat span { color: var(--muted); font-size:14px; font-weight:700; }
+    .split { display:grid; grid-template-columns: .8fr 1.2fr; gap: clamp(28px, 5vw, 70px); align-items:start; }
+    .kicker { color: var(--red-dark); font-weight: 800; text-transform:uppercase; letter-spacing:.08em; font-size:12px; margin-bottom:12px; }
+    .body-big { font-family: "Source Serif 4", Georgia, serif; font-size: clamp(21px, 2vw, 30px); line-height:1.28; margin: 18px 0 0; }
+    .cards { display:grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 34px; }
+    .card { background:white; border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; box-shadow: 0 16px 50px rgba(17,19,26,.07); }
+    .card p { color: var(--muted); margin: 12px 0 0; }
+    .number { width:48px; height:48px; border-radius:16px; display:grid; place-items:center; font-weight:900; color:white; background: var(--ink); margin-bottom: 22px; }
+    .process { counter-reset: step; display:grid; gap: 16px; margin-top: 34px; }
+    .step { counter-increment: step; display:grid; grid-template-columns: 90px 1fr; gap: 22px; align-items:center; background:#fff; border:1px solid var(--line); border-radius: 30px; padding:22px; box-shadow: 0 14px 42px rgba(17,19,26,.06); }
+    .step::before { content:"0" counter(step); font-size: 44px; line-height:1; font-weight:900; color: var(--red); letter-spacing:-.07em; }
+    .step p { margin: 8px 0 0; color: var(--muted); }
+    .dark { background:#11131a; color:white; margin-top: 34px; position:relative; }
+    .dark .section { padding-top: clamp(70px, 8vw, 118px); }
+    .dark h2, .dark h3 { color:white; }
+    .dark p, .dark li { color: rgba(255,255,255,.72); }
+    .dark .card { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); box-shadow:none; }
+    .two-list { display:grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 34px; }
+    .tick-list { list-style:none; padding:0; margin: 18px 0 0; display:grid; gap: 12px; }
+    .tick-list li { display:flex; gap: 10px; align-items:flex-start; }
+    .tick-list li::before { content:"✓"; flex:0 0 24px; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background: var(--green); color:white; font-weight:900; font-size:13px; margin-top:1px; }
+    .offer-examples { display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top:34px; }
+    .example { min-height: 188px; border-radius: 26px; padding: 20px; display:flex; flex-direction:column; justify-content:space-between; color:#151821; background: var(--yellow); box-shadow: 0 14px 36px rgba(17,19,26,.08); }
+    .example:nth-child(2) { background:#dbe8ff; }
+    .example:nth-child(3) { background:#e3f4e9; }
+    .example:nth-child(4) { background:#ffdcd9; }
+    .example span { font-size: 36px; }
+    .quote { background: #fff; color: var(--ink); border-radius: 34px; padding: clamp(28px, 5vw, 54px); box-shadow: var(--shadow); margin-top:34px; display:grid; grid-template-columns: 1fr .7fr; gap: 30px; align-items:end; }
+    .quote p { font-family:"Source Serif 4", Georgia, serif; font-size: clamp(27px, 3.4vw, 48px); line-height:1.08; margin:0; color:var(--ink); }
+    .quote aside { color: var(--muted); font-weight:700; }
+    .faq { display:grid; gap: 12px; margin-top:34px; }
+    details { background:#fff; border:1px solid var(--line); border-radius:22px; padding: 20px 22px; }
+    summary { cursor:pointer; font-weight:900; font-size: 18px; }
+    details p { margin: 12px 0 0; color: var(--muted); }
+    .contact { display:grid; grid-template-columns: .9fr 1.1fr; gap: 34px; align-items:start; }
+    form { background:white; border:1px solid var(--line); border-radius: 34px; padding: 26px; box-shadow: var(--shadow); display:grid; gap: 14px; }
+    label { display:grid; gap: 7px; font-size:13px; font-weight:900; color:#343945; }
+    input, textarea, select { width:100%; border:1px solid rgba(17,19,26,.16); background:#fffaf1; border-radius:16px; padding:14px 15px; font: 600 16px Archivo, sans-serif; color:var(--ink); }
+    textarea { min-height:120px; resize:vertical; }
+    .form-note { color: var(--muted); font-size:13px; margin:0; }
+    .preview-badge { display:inline-flex; width:max-content; align-items:center; gap:8px; border:1px solid rgba(231,51,42,.25); background:rgba(231,51,42,.08); color:var(--red-dark); border-radius:999px; padding:8px 11px; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+    footer { padding: 36px 0 52px; border-top:1px solid var(--line); color: var(--muted); }
+    footer .inner { width:min(var(--site), calc(100% - 36px)); margin:0 auto; display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+    @media (max-width: 920px) {
+      .nav { height: 68px; }
+      .nav-links { display:none; }
+      .hero-grid, .split, .contact, .quote { grid-template-columns:1fr; }
+      .benefit-card { min-height: auto; }
+      .stat-strip, .cards, .two-list, .offer-examples { grid-template-columns:1fr; }
+      .stat-strip { margin-top: -22px; }
+      .step { grid-template-columns:1fr; gap:10px; }
+      .step::before { font-size: 34px; }
+      .hero-actions .btn { width:100%; }
+      .brand small { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a class="brand" href="#top" aria-label="firmenbenefits.at Start">
+        <span class="brand-mark">fb</span>
+        <span>firmenbenefits.at <small>Regionale Mitarbeitervorteile</small></span>
+      </a>
+      <div class="nav-links">
+        <a href="#modell">Modell</a>
+        <a href="#ablauf">Ablauf</a>
+        <a href="#vorteile">Vorteile</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <a class="nav-cta" href="#kontakt">Interesse melden</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <p class="eyebrow">Für Betriebsräte in Österreich</p>
+          <h1>Mehr Vorteile für eure Leute. Ohne Portaldrama.</h1>
+          <p class="lead">firmenbenefits.at verbindet euren Betriebsrat mit regionalen Unternehmen, die Werbebudget lieber direkt als Mitarbeitervorteil weitergeben.</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#kontakt">Benefit-Pilot anfragen →</a>
+            <a class="btn secondary" href="#ablauf">So funktioniert’s</a>
+          </div>
+          <p class="hero-note">Kein Login-Zwang. Kein neues System. Monatlich verwertbare Angebote für eure interne Kommunikation.</p>
+        </div>
+        <aside class="benefit-card" aria-label="Beispiel Benefit Übersicht">
+          <div class="mock-window">
+            <div class="mock-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+            <div class="offer-row"><span class="icon">🥐</span><strong>Regionale Genussbox</strong><span class="tag">-15%</span></div>
+            <div class="offer-row"><span class="icon">🏋️</span><strong>Fitness & Gesundheit</strong><span class="tag">Partner</span></div>
+            <div class="offer-row"><span class="icon">🪴</span><strong>Garten & Zuhause</strong><span class="tag">Vorteil</span></div>
+            <div class="offer-row"><span class="icon">🍳</span><strong>Küche & Wohnen</strong><span class="tag">exklusiv</span></div>
+          </div>
+          <p class="card-caption">Eine Mail, die der Betriebsrat wirklich weiterleiten kann.</p>
+        </aside>
+      </div>
+    </section>
+
+    <div class="stat-strip" aria-label="Kernvorteile">
+      <div class="stat"><strong>Monatlich</strong><span>neue regionale Angebote</span></div>
+      <div class="stat"><strong>Flexibel</strong><span>Nachweis passend zur Firma</span></div>
+      <div class="stat"><strong>Einfach</strong><span>ohne zusätzliche Plattform</span></div>
+    </div>
+
+    <section class="section split" id="modell">
+      <div>
+        <p class="kicker">Die Idee</p>
+        <h2>Rabatte statt anonyme Anzeigen.</h2>
+      </div>
+      <div>
+        <p class="body-big">Viele regionale Anbieter zahlen heute für Reichweite bei großen Digitalkonzernen. Firmenbenefits dreht das um: Ein Teil dieses Budgets wird zum echten Vorteil für Mitarbeiter in eurer Region.</p>
+        <div class="cards">
+          <article class="card"><div class="number">1</div><h3>Betriebsrat</h3><p>Ihr wollt regelmäßig sichtbare Vorteile anbieten, ohne selbst Partner suchen und verhandeln zu müssen.</p></article>
+          <article class="card"><div class="number">2</div><h3>Regionale Anbieter</h3><p>Sie bekommen Zugang zu relevanten Zielgruppen und geben den Vorteil direkt an Mitarbeiter weiter.</p></article>
+          <article class="card"><div class="number">3</div><h3>Mitarbeiter</h3><p>Sie erhalten verständliche, regionale Angebote ohne komplizierte App, Login oder Gutschein-Chaos.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="ablauf">
+      <p class="kicker">So läuft’s</p>
+      <h2>Vier Schritte, kein neues System.</h2>
+      <div class="process">
+        <article class="step"><div><h3>Interesse melden</h3><p>Region, Firmengröße und grobe Ausgangslage reichen für den Start.</p></div></article>
+        <article class="step"><div><h3>Partner finden</h3><p>Wir sprechen mit passenden regionalen Betrieben und klären konkrete Mitarbeitervorteile.</p></div></article>
+        <article class="step"><div><h3>Nachweis festlegen</h3><p>Mitarbeiterausweis, Betriebsrats-Mail, Code oder Bestätigung — was bei euch realistisch funktioniert.</p></div></article>
+        <article class="step"><div><h3>Angebote weitergeben</h3><p>Ihr bekommt eine klare Übersicht und könnt sie intern an eure Belegschaft senden.</p></div></article>
+      </div>
+    </section>
+
+    <section class="dark" id="vorteile">
+      <div class="section">
+        <p class="kicker">Warum das sinnvoll ist</p>
+        <h2>Der Betriebsrat wirkt präsenter. Die Region profitiert.</h2>
+        <div class="two-list">
+          <article class="card">
+            <h3>Für Betriebsräte</h3>
+            <ul class="tick-list">
+              <li>Ihr zeigt laufend: Wir kümmern uns um konkrete Vorteile.</li>
+              <li>Keine mühsame Einzelakquise und keine Portal-Einführung.</li>
+              <li>Der Nachweis wird auf eure Realität angepasst.</li>
+              <li>Neue Gesprächsanlässe für interne Kommunikation.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Für Anbieter</h3>
+            <ul class="tick-list">
+              <li>Werbebudget wird zu einem direkt spürbaren Vorteil.</li>
+              <li>Regionale Sichtbarkeit bei relevanten Zielgruppen.</li>
+              <li>Faire Positionierung statt austauschbarer Anzeigen.</li>
+              <li>Partnerschaften, die lokal Sinn machen.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="offer-examples">
+          <article class="example"><span>🍫</span><strong>Genuss & Lebensmittel</strong><small>z.B. Manufakturen, Feinkost, Schokolade</small></article>
+          <article class="example"><span>💪</span><strong>Fitness & Gesundheit</strong><small>Studios, Kurse, Gesundheitsangebote</small></article>
+          <article class="example"><span>🏡</span><strong>Zuhause & Garten</strong><small>Regionale Dienstleister und Händler</small></article>
+          <article class="example"><span>🛠️</span><strong>Services</strong><small>Praktische Angebote aus der Umgebung</small></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <p class="kicker">Positionierung</p>
+      <h2>Nicht noch eine Benefit-Plattform.</h2>
+      <div class="quote">
+        <p>„Unser Betriebsrat kümmert sich — und zwar nicht einmal im Jahr, sondern immer wieder.“</p>
+        <aside>Genau diese Botschaft soll firmenbenefits.at leichter machen: sichtbar, regional und ohne zusätzliche Systemlast.</aside>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <p class="kicker">FAQ</p>
+      <h2>Die naheliegenden Fragen.</h2>
+      <div class="faq">
+        <details open><summary>Kostet das den Betriebsrat etwas?</summary><p>Die konkrete Ausgestaltung wird individuell besprochen. Wichtig für den Start: Der Betriebsrat soll keinen zusätzlichen administrativen Aufwand bekommen.</p></details>
+        <details><summary>Brauchen wir ein Portal oder eine App?</summary><p>Nein. Der erste Ansatz ist bewusst einfach: klare Angebotsübersichten per E-Mail und ein Nachweis, der zu eurer Firma passt.</p></details>
+        <details><summary>Was, wenn wir keine Mitarbeiterausweise haben?</summary><p>Dann nutzen wir andere Wege: Betriebsrats-Mail, interne Bestätigung, Code oder ein anderer Nachweis, der praktikabel ist.</p></details>
+        <details><summary>Welche Anbieter passen dazu?</summary><p>Alles, was für Mitarbeiter regional relevant ist: Gesundheit, Genuss, Wohnen, Garten, Dienstleistungen, Freizeit und mehr.</p></details>
+      </div>
+    </section>
+
+    <section class="section contact" id="kontakt">
+      <div>
+        <p class="kicker">Nächster Schritt</p>
+        <h2>Interesse als Betriebsrat?</h2>
+        <p class="body-big">Schick kurz Region, Firma und grobe Mitarbeiterzahl. Dann kann man sauber prüfen, ob ein Benefit-Pilot sinnvoll ist.</p>
+      </div>
+      <form id="lead-form">
+        <span class="preview-badge">Preview Formular · Testmodus</span>
+        <label>Name<input name="name" autocomplete="name" placeholder="Max Mustermann" /></label>
+        <label>Firma / Organisation<input name="company" autocomplete="organization" placeholder="Betriebsrat Muster GmbH" /></label>
+        <label>Funktion<select name="role"><option>Betriebsrat</option><option>HR / Geschäftsführung</option><option>Regionaler Anbieter</option><option>Sonstiges</option></select></label>
+        <label>E-Mail<input name="email" type="email" autocomplete="email" placeholder="name@firma.at" /></label>
+        <label>Nachricht<textarea name="message" placeholder="Region, Mitarbeiterzahl, was euch wichtig wäre …"></textarea></label>
+        <button class="btn primary" type="submit">Unverbindlich Interesse melden</button>
+        <p class="form-note">Preview: Das Formular sendet noch nicht produktiv. Datenschutzhinweis wird vor Livegang final ergänzt.</p>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <div class="inner">
+      <strong>firmenbenefits.at</strong>
+      <span>Preview · noindex · Impressum/Datenschutz vor Livegang final verknüpfen</span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('lead-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const btn = event.currentTarget.querySelector('button');
+      btn.textContent = 'Test gespeichert – noch nicht produktiv';
+      btn.style.background = '#1d8b5f';
+    });
+  </script>
+</body>
+</html>
