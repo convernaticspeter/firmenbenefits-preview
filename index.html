@@ -47,6 +47,7 @@
     .hero { position: relative; padding: clamp(56px, 9vw, 110px) 0 70px; }
     .hero::before { content:""; position:absolute; inset:0; background: radial-gradient(circle at 15% 10%, rgba(255,200,67,.38), transparent 34%), radial-gradient(circle at 88% 18%, rgba(231,51,42,.18), transparent 30%), linear-gradient(180deg, #fffaf1 0%, #f6eddf 100%); z-index:-2; }
     .hero-grid { width:min(var(--site), calc(100% - 36px)); margin:0 auto; display:grid; grid-template-columns: minmax(0, 1.02fr) minmax(360px, .78fr); gap: clamp(36px, 6vw, 76px); align-items:center; }
+    .hero-grid > *, .split > *, .contact > *, .quote > * { min-width: 0; }
     .eyebrow { display:inline-flex; align-items:center; gap:9px; color: var(--red-dark); font-weight: 800; text-transform: uppercase; letter-spacing:.08em; font-size: 12px; margin-bottom: 18px; }
     .eyebrow::before { content:""; width: 34px; height: 2px; background: var(--red); border-radius:99px; }
     h1, h2, h3 { margin:0; line-height: .98; letter-spacing:-.055em; }
@@ -123,6 +124,22 @@
       .step::before { font-size: 34px; }
       .hero-actions .btn { width:100%; }
       .brand small { display:none; }
+    }
+    @media (max-width: 520px) {
+      body { font-size: 16px; }
+      .nav { width: 100%; padding: 0 18px; gap: 12px; }
+      .brand { min-width: 0; font-size: 17px; }
+      .nav-cta { display: none; }
+      .section, .hero-grid, .stat-strip, footer .inner { width: calc(100% - 36px); }
+      .hero { padding-top: 64px; }
+      h1 { font-size: clamp(38px, 10.8vw, 42px); letter-spacing: -.065em; max-width: 330px; }
+      .lead { font-size: 20px; max-width: 330px; }
+      .hero-actions, .hero-note, .benefit-card { max-width: 330px; }
+      .hero-actions .btn { width: 100%; max-width: 330px; }
+      .offer-row { grid-template-columns: 44px minmax(0, 1fr) auto; }
+      .offer-row strong { min-width: 0; }
+      .mock-window { transform: none; }
+      .benefit-card { padding: 22px; border-radius: 28px; }
     }
   </style>
 </head>
