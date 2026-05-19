@@ -150,3 +150,12 @@
     .footer-links a { font-weight:800; color:#343945; }
     .nav-links a[aria-current="page"] { color: var(--red-dark); }
     @media (max-width: 920px) { .mini-grid, .comparison { grid-template-columns:1fr; } }
+    @media (max-width: 520px) {
+      .page-hero .inner { width: calc(100% - 36px); }
+      .page-hero h1 { font-size: clamp(34px, 9.4vw, 37px); line-height: 1.04; letter-spacing: -.06em; max-width: 330px; }
+      .page-hero .lead { font-size: 19px; max-width: 330px; }
+      h2 { font-size: clamp(29px, 8vw, 32px); line-height: 1.05; letter-spacing: -.055em; max-width: 330px; }
+      .body-big { font-size: 20px; max-width: 330px; }
+      .page-nav { max-width: 330px; }
+      .page-nav .btn { width: 100%; }
+    }
