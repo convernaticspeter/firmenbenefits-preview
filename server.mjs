@@ -10,6 +10,9 @@ http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
  if(!prod && host!=='www.firmenbenefits.at')res.setHeader('X-Robots-Tag','noindex, nofollow');
  if(host === 'www.firmenbenefits.at'){res.writeHead(301,{Location:'https://firmenbenefits.at'+u.pathname+u.search});return res.end();}
+ const oldId=u.searchParams.get('page_id')||u.searchParams.get('p');
+ const oldIds={'41':'/','141':'/impressum.html','146':'/datenschutz.html'};
+ if(oldId && oldIds[oldId]){res.writeHead(301,{Location:'https://firmenbenefits.at'+oldIds[oldId]});return res.end();}
  if(redirects[u.pathname]){res.writeHead(301,{Location:redirects[u.pathname]+u.search});return res.end();}
  if(u.pathname==='/robots.txt'){res.setHeader('Content-Type','text/plain');return res.end(prod?'User-agent: *\nAllow: /\nSitemap: https://firmenbenefits.at/sitemap.xml\n':'User-agent: *\nDisallow: /\n');}
  if(u.pathname==='/sitemap.xml'){res.setHeader('Content-Type','application/xml');return res.end('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+files.map(f=>'<url><loc>https://firmenbenefits.at/'+(f==='index.html'?'':f)+'</loc></url>').join('')+'</urlset>');}
