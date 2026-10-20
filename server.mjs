@@ -8,7 +8,7 @@ http.createServer(async(req,res)=>{
  const u = new URL(req.url,'http://localhost'); const host = (req.headers.host||'').split(':')[0];
  const prod = host === 'firmenbenefits.at';
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
- if(!prod)res.setHeader('X-Robots-Tag','noindex, nofollow');
+ if(!prod && host!=='www.firmenbenefits.at')res.setHeader('X-Robots-Tag','noindex, nofollow');
  if(host === 'www.firmenbenefits.at'){res.writeHead(301,{Location:'https://firmenbenefits.at'+u.pathname+u.search});return res.end();}
  if(redirects[u.pathname]){res.writeHead(301,{Location:redirects[u.pathname]+u.search});return res.end();}
  if(u.pathname==='/robots.txt'){res.setHeader('Content-Type','text/plain');return res.end(prod?'User-agent: *\nAllow: /\nSitemap: https://firmenbenefits.at/sitemap.xml\n':'User-agent: *\nDisallow: /\n');}
