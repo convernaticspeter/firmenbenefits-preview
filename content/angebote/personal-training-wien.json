@@ -1,0 +1,42 @@
+{
+  "slug": "personal-training-wien",
+  "aktiv": true,
+  "reihenfolge": 10,
+  "kategorie": "Personal Training",
+  "partner": "Michelle Emminger",
+  "partnerKurz": "Michelle",
+  "partnerZeile": "Michelle Emminger, Personal Training in Wien",
+  "icon": "training",
+  "rabattTitel": "15 % auf alle Personal-Training-Abos",
+  "rabattKurz": "−15 %",
+  "rabatte": ["15 % auf alle Personal-Training-Abos"],
+  "mailHinweis": "15 % auf alle Personal-Training-Abos",
+  "teaser": "1:1-Training für Kraft, Haltung und Rücken – auch für den (Wieder-)Einstieg.",
+  "lead": "Bei Michelle Emminger, Personal Training in Wien: 1:1-Training für Kraft, Haltung und Rücken – ideal für den (Wieder-)Einstieg.",
+  "regionen": ["wien"],
+  "regionText": "nur Wien",
+  "gueltigBis": "2027-02-01",
+  "empfaenger": ["fitness@michelle-emminger.at"],
+  "website": "https://michelle-emminger.at",
+  "websiteLabel": "michelle-emminger.at",
+  "portraitTitel": "Über Michelle Emminger",
+  "portrait": [
+    "Michelle Emminger trainiert in Wien vor allem Menschen ab 40, die sich wieder stärker, sicherer und wohler in ihrem Körper fühlen wollen. Ihre 4-ME Method verbindet Training, Technik und Alltag zu einem Plan, der auch in einer vollen Arbeitswoche hält.",
+    "Sie ist mehrfach diplomierte Personal-, Gesundheits- und Functional Trainerin und kennt den Weg zurück zu mehr Kraft aus eigener Erfahrung. Ihr Grundsatz: Technik zuerst, kein Druck, keine Wunder-Versprechen."
+  ],
+  "leistungen": [
+    "1:1 Personal Training in Wien",
+    "Rückentraining: Core, Haltung, Belastbarkeit",
+    "Muskelaufbau mit sauberer Technik",
+    "Begleiteter (Wieder-)Einstieg ins Training"
+  ],
+  "schritte": [
+    ["Anfrage schicken", "Formular unten ausfüllen. Das dauert eine Minute."],
+    ["Michelle meldet sich", "Sie meldet sich persönlich bei dir und klärt mit dir Ziel, Ausgangslage und Start."],
+    ["Rabatt nutzen", "Du bekommst 15 % auf dein Personal-Training-Abo. Michelle kennt deinen firmenbenefits-Rabatt aus der Anfrage."]
+  ],
+  "formHinweis": "Wir leiten deine Anfrage an Michelle Emminger weiter. Sie meldet sich persönlich bei dir.",
+  "nachrichtPlatzhalter": "z. B. Ziel, Rückenthema oder Wunschtermine",
+  "seoTitel": "15 % auf Personal Training in Wien – Michelle Emminger | firmenbenefits.at",
+  "seoBeschreibung": "Für Beschäftigte: 15 % auf alle Personal-Training-Abos bei Michelle Emminger in Wien. Anfrage über das Formular, ohne Ausweis und ohne Code. Gilt im Pilot bis 1. Februar 2027."
+}

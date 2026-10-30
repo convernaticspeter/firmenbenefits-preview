@@ -1,0 +1,29 @@
+{
+  "name": "firmenbenefits.at",
+  "canonicalHost": "firmenbenefits.at",
+  "pilot": {
+    "ende": "2027-02-01",
+    "endeText": "1. Februar 2027",
+    "regionen": ["wien", "baden", "bruck-an-der-leitha", "gaenserndorf", "moedling"]
+  },
+  "regionen": {
+    "wien": { "label": "Wien", "lang": "Wien" },
+    "baden": { "label": "Baden", "lang": "Bezirk Baden" },
+    "bruck-an-der-leitha": { "label": "Bruck an der Leitha", "lang": "Bezirk Bruck an der Leitha" },
+    "gaenserndorf": { "label": "Gänserndorf", "lang": "Bezirk Gänserndorf" },
+    "moedling": { "label": "Mödling", "lang": "Bezirk Mödling" }
+  },
+  "betreiber": {
+    "firma": "Convernatics",
+    "inhaber": "Ing. Peter Michael Zipper, BA",
+    "strasse": "Kochgasse 25/16",
+    "ort": "1080 Wien",
+    "land": "Österreich",
+    "email": "einfach@convernatics.com",
+    "telefon": "+43 676 561 71 66",
+    "telefonHref": "+436765617166",
+    "uid": "ATU69679038"
+  },
+  "plausibleDomain": "firmenbenefits.at",
+  "plausibleScript": "https://plausible.convernatics.com/js/script.js"
+}

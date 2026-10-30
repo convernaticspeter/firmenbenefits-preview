@@ -1,31 +1,238 @@
+// firmenbenefits.at – static pages from dist/ plus form API.
+// Flow per submission: validate → mosparo (fail closed) → ClickUp task → mails (Emailit SMTP).
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-const root = process.cwd();
-const files = ['index.html','betriebsraete.html','hr.html','unternehmen.html','impressum.html','datenschutz.html'];
-const redirects = {'/impressum/':'/impressum.html','/datenschutzerklaerung/':'/datenschutz.html','/startseite/':'/','/index.html':'/','/wp-sitemap.xml':'/sitemap.xml','/sitemap_index.xml':'/sitemap.xml','/page-sitemap1.xml':'/sitemap.xml'};
-http.createServer(async(req,res)=>{
- const u = new URL(req.url,'http://localhost'); const host = (req.headers.host||'').split(':')[0];
- const prod = host === 'firmenbenefits.at';
- res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
- if(!prod && host!=='www.firmenbenefits.at')res.setHeader('X-Robots-Tag','noindex, nofollow');
- if(host === 'www.firmenbenefits.at'){res.writeHead(301,{Location:'https://firmenbenefits.at'+u.pathname+u.search});return res.end();}
- const oldId=u.searchParams.get('page_id')||u.searchParams.get('p');
- const oldIds={'41':'/','141':'/impressum.html','146':'/datenschutz.html'};
- if(oldId && oldIds[oldId]){res.writeHead(301,{Location:'https://firmenbenefits.at'+oldIds[oldId]});return res.end();}
- if(redirects[u.pathname]){res.writeHead(301,{Location:redirects[u.pathname]+u.search});return res.end();}
- if(u.pathname==='/robots.txt'){res.setHeader('Content-Type','text/plain');return res.end(prod?'User-agent: *\nAllow: /\nSitemap: https://firmenbenefits.at/sitemap.xml\n':'User-agent: *\nDisallow: /\n');}
- if(u.pathname==='/sitemap.xml'){res.setHeader('Content-Type','application/xml');return res.end('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+files.map(f=>'<url><loc>https://firmenbenefits.at/'+(f==='index.html'?'':f)+'</loc></url>').join('')+'</urlset>');}
- if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end();}
- let p;try{p=decodeURIComponent(u.pathname);}catch{res.writeHead(400);return res.end();}
- const file = path.resolve(root,'.'+(p==='/'?'/index.html':p));
- if(!file.startsWith(root+'/')||(!files.includes(path.relative(root,file))&&!['styles.css','consent.js','consent.css'].includes(path.relative(root,file)))){res.writeHead(404);return res.end('Seite nicht gefunden');}
- try{
- let data = await fs.readFile(file); const ext=path.extname(file);
- if(ext==='.html'){
-  const canonical='https://firmenbenefits.at'+(p==='/index.html'?'/':p);
-  data=Buffer.from(data.toString().replace('noindex, nofollow',prod?'index, follow':'noindex, nofollow').replace('</head>',`<link rel="canonical" href="${canonical}"><link rel="stylesheet" href="/consent.css"><script>window.ConvernaticsConsentConfig={version:'firmenbenefits-v1',language:'de',services:[{key:'convernatics-consent',name:'Convernatics Consent',group:'necessary',provider:'Convernatics',description:'Speichert Ihre Datenschutzeinstellungen',privacy:'/datenschutz.html',cookies:[{name:'convernatics_consent',lifetime:'180 Tage'}]}]};</script><script defer src="/consent.js"></script>${prod?'<script defer data-domain="firmenbenefits.at" src="https://plausible.convernatics.com/js/script.js"></script>':''}</head>`).replace('</body>','<footer style="text-align:center;padding:1rem"><button type="button" data-cc-open>Cookie-Einstellungen</button></footer></body>'));
- }
- res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.css':'text/css','.js':'application/javascript'})[ext]||'application/octet-stream','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
- }catch{res.writeHead(404);res.end('Seite nicht gefunden');}
-}).listen(3000,'0.0.0.0');
+import { fileURLToPath } from 'node:url';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import nodemailer from 'nodemailer';
+import { loadContent } from './lib/content.mjs';
+import { validate, mosparoFieldNames, requestId } from './lib/schema.mjs';
+import { verifyMosparo } from './lib/mosparo.mjs';
+import * as clickup from './lib/clickup.mjs';
+import { anfrageMessages, betriebsratMessages, partnerMessages } from './lib/messages.mjs';
+
+const env = process.env;
+const root = path.dirname(fileURLToPath(import.meta.url));
+const distDir = path.join(root, 'dist');
+const { site, offersBySlug } = await loadContent();
+const CANON = site.canonicalHost;
+const previewHosts = (env.PREVIEW_HOSTS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const validHosts = new Set([CANON, 'www.' + CANON, ...previewHosts, 'localhost', '127.0.0.1']);
+const port = Number(env.PORT || 3000);
+const QA = (env.FORM_QA_RECIPIENT || '').trim();
+
+const transport = nodemailer.createTransport({
+  host: env.EMAILIT_SMTP_HOST, port: Number(env.EMAILIT_SMTP_PORT || 587), secure: env.EMAILIT_SMTP_PORT === '465',
+  auth: { user: env.EMAILIT_SMTP_USER, pass: env.EMAILIT_SMTP_PASSWORD }, connectionTimeout: 15000, socketTimeout: 20000
+});
+const mailConfigured = () => Boolean(env.EMAILIT_SMTP_HOST && env.EMAILIT_SMTP_USER && env.EMAILIT_SMTP_PASSWORD && env.EMAILIT_SMTP_FROM && (QA || env.FB_COPY_TO));
+const from = () => ({ name: env.MAIL_FROM_NAME || 'firmenbenefits.at', address: env.EMAILIT_SMTP_FROM });
+const copyTo = () => QA || env.FB_COPY_TO;
+const replyTo = () => env.FB_REPLY_TO || env.FB_COPY_TO || site.betreiber.email;
+
+async function send({ to, subject, text, replyTo: rt }) {
+  if (!to || (Array.isArray(to) && !to.length)) return { ok: false, error: 'no_recipient' };
+  try {
+    const result = await transport.sendMail({ from: from(), to, subject: (QA ? 'TEST – ' : '') + subject, text, replyTo: rt || replyTo() });
+    return { ok: Boolean(result.accepted?.length), messageId: result.messageId };
+  } catch (error) {
+    return { ok: false, error: error.code || 'SMTP_ERROR' };
+  }
+}
+
+async function store(task) {
+  if (!clickup.clickupConfigured()) return null;
+  try { return await clickup.createTask(task); } catch (error) { console.error(JSON.stringify({ event: 'clickup_failed', status: error.status || null })); return null; }
+}
+
+const doiSig = (id, tid) => createHmac('sha256', env.FB_DOI_SECRET || '').update(`doi|${id}|${tid}`).digest('hex').slice(0, 32);
+function log(event, id, data) { console.info(JSON.stringify({ event, id, qa: Boolean(QA), ...data })); }
+
+// ---------- Handlers ----------
+async function handleAnfrage(v) {
+  const offer = offersBySlug[v.angebot];
+  const id = requestId();
+  const now = new Date();
+  const first = anfrageMessages({ id, v, offer, site, now });
+  const stored = await store(first.task);
+  const recipients = QA ? [QA] : offer.empfaenger;
+  const partnerResult = await send({ to: recipients, ...first.partner });
+  const partnerStatus = partnerResult.ok ? `zugestellt an ${recipients.join(', ')}${QA ? ' (QA-Umleitung)' : ''}` : `FEHLGESCHLAGEN (${partnerResult.error}) – bitte manuell an ${offer.empfaenger.join(', ')} weiterleiten`;
+  const msgs = anfrageMessages({ id, v, offer, site, now, clickupUrl: stored?.url || '', partnerStatus });
+  const [copyResult, confResult] = await Promise.all([send({ to: copyTo(), ...msgs.copy }), send({ to: v.email, ...msgs.confirmation })]);
+  log('anfrage', id, { angebot: offer.slug, br: Boolean(v.br), stored: Boolean(stored), partner: partnerResult.ok, copy: copyResult.ok, confirmation: confResult.ok });
+  if (!partnerResult.ok && !copyResult.ok) return { status: 502, body: { error: 'Deine Anfrage konnte gerade nicht übermittelt werden. Bitte versuch es noch einmal.' } };
+  return { status: 200, body: { ok: true, id } };
+}
+
+async function handleBetriebsrat(v, ctx) {
+  const id = requestId();
+  const now = new Date();
+  const first = betriebsratMessages({ id, v, site, now, doiUrl: '' });
+  const stored = await store(first.task);
+  const tid = stored?.id || '';
+  const doiUrl = `https://${ctx.publicHost}/bestaetigen/?id=${encodeURIComponent(id)}&tid=${encodeURIComponent(tid)}&sig=${doiSig(id, tid)}`;
+  const msgs = betriebsratMessages({ id, v, site, now, doiUrl, clickupUrl: stored?.url || '' });
+  const [confResult, copyResult] = await Promise.all([send({ to: v.email, ...msgs.confirmation }), send({ to: copyTo(), ...msgs.copy })]);
+  log('betriebsrat', id, { br: Boolean(v.br), stored: Boolean(stored), confirmation: confResult.ok, copy: copyResult.ok });
+  if (!confResult.ok && !copyResult.ok) return { status: 502, body: { error: 'Die Anmeldung konnte gerade nicht übermittelt werden. Bitte versucht es noch einmal.' } };
+  return { status: 200, body: { ok: true, id } };
+}
+
+async function handlePartner(v) {
+  const id = requestId();
+  const now = new Date();
+  const first = partnerMessages({ id, v, site, now });
+  const stored = await store(first.task);
+  const msgs = partnerMessages({ id, v, site, now, clickupUrl: stored?.url || '' });
+  const [copyResult, confResult] = await Promise.all([send({ to: copyTo(), ...msgs.copy }), send({ to: v.email, ...msgs.confirmation })]);
+  log('partner', id, { stored: Boolean(stored), copy: copyResult.ok, confirmation: confResult.ok });
+  if (!stored && !copyResult.ok) return { status: 502, body: { error: 'Ihre Anfrage konnte gerade nicht übermittelt werden. Bitte versuchen Sie es noch einmal.' } };
+  return { status: 200, body: { ok: true, id } };
+}
+
+async function handleBestaetigen(fields) {
+  const id = String(fields.id || ''); const tid = String(fields.tid || ''); const sig = String(fields.sig || '');
+  const invalid = { status: 400, body: { error: 'Der Bestätigungslink ist ungültig.' } };
+  if (!/^FB-\d{4}-[A-Z0-9]{5}$/.test(id) || !/^[a-z0-9]{0,20}$/.test(tid) || !/^[a-f0-9]{32}$/.test(sig) || !env.FB_DOI_SECRET) return invalid;
+  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(doiSig(id, tid)))) return invalid;
+  const when = new Intl.DateTimeFormat('de-AT', { timeZone: 'Europe/Vienna', dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
+  let done = false;
+  if (tid && clickup.clickupConfigured()) {
+    try {
+      await clickup.addComment(tid, `✅ Double-Opt-in bestätigt am ${when} über den Bestätigungslink (Anmelde-ID ${id}).`);
+      await clickup.addTag(tid, 'fb-doi-bestaetigt');
+      done = true;
+    } catch (error) { console.error(JSON.stringify({ event: 'doi_clickup_failed', status: error.status || null })); }
+  }
+  if (!done) {
+    const r = await send({ to: copyTo(), subject: `[firmenbenefits] Double-Opt-in bestätigt (${id})`, text: `Die Anmeldung ${id} wurde am ${when} über den Bestätigungslink bestätigt.\nClickUp-Task: ${tid || 'nicht vorhanden'} – bitte manuell vermerken.` });
+    if (!r.ok) return { status: 502, body: { error: 'Die Bestätigung konnte gerade nicht gespeichert werden.' } };
+  }
+  log('doi', id, { clickup: done });
+  return { status: 200, body: { ok: true } };
+}
+
+// ---------- HTTP ----------
+const REDIRECTS = {
+  '/index.html': '/', '/startseite/': '/', '/hello-world/': '/', '/betriebsraete.html': '/#mitmachen', '/betriebsraete/': '/#mitmachen', '/hr.html': '/',
+  '/unternehmen.html': '/partner-werden/', '/partner/': '/partner-werden/', '/impressum.html': '/impressum/', '/datenschutz.html': '/datenschutz/',
+  '/datenschutzerklaerung/': '/datenschutz/', '/kontakt/': '/#mitmachen', '/wp-sitemap.xml': '/sitemap.xml', '/sitemap_index.xml': '/sitemap.xml', '/page-sitemap1.xml': '/sitemap.xml'
+};
+const OLD_IDS = { '1': '/', '41': '/', '141': '/impressum/', '146': '/datenschutz/' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.xml': 'application/xml; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.ico': 'image/x-icon' };
+const buckets = new Map();
+const LIMITS = { anfrage: 10, betriebsrat: 5, partner: 5, bestaetigen: 20 };
+
+function csp() {
+  const m = env.MOSPARO_HOST ? new URL(env.MOSPARO_HOST).origin : '';
+  const p = new URL(site.plausibleScript).origin;
+  return [`default-src 'self'`, `script-src 'self' ${m} ${p}`, `style-src 'self' 'unsafe-inline' ${m}`, `img-src 'self' data: ${m}`, `font-src 'self' ${m}`, `connect-src 'self' ${m} ${p}`, `worker-src 'self' blob: ${m}`, `frame-ancestors 'self'`, `base-uri 'self'`, `form-action 'self'`, `object-src 'none'`].join('; ').replace(/\s+;/g, ';');
+}
+
+function rateLimited(ip, kind) {
+  const now = Date.now();
+  for (const [k, v] of buckets) if (now - v.start > 3600000) buckets.delete(k);
+  const key = kind + '|' + ip;
+  const b = buckets.get(key) || { start: now, count: 0 };
+  if (b.count >= (LIMITS[kind] || 5)) return true;
+  b.count++; buckets.set(key, b);
+  return false;
+}
+
+async function readBody(req) {
+  let raw = '';
+  for await (const chunk of req) { raw += chunk; if (Buffer.byteLength(raw) > 32768) throw Object.assign(new Error('too_large'), { status: 413 }); }
+  return (req.headers['content-type'] || '').includes('application/json') ? JSON.parse(raw) : Object.fromEntries(new URLSearchParams(raw));
+}
+
+async function api(req, res, url, host, json) {
+  if (url.pathname === '/api/health') return json(200, { ok: true, mail: mailConfigured(), clickup: clickup.clickupConfigured(), mosparo: Boolean(env.MOSPARO_HOST && env.MOSPARO_PRIVATE_KEY), doi: Boolean(env.FB_DOI_SECRET), qa: Boolean(QA) });
+  if (url.pathname === '/api/mosparo-config') return json(200, { host: env.MOSPARO_HOST || '', uuid: env.MOSPARO_UUID || '', publicKey: env.MOSPARO_PUBLIC_KEY || '' });
+  const kind = { '/api/anfrage': 'anfrage', '/api/betriebsrat': 'betriebsrat', '/api/partner': 'partner', '/api/bestaetigen': 'bestaetigen' }[url.pathname];
+  if (!kind) return json(404, { error: 'Nicht gefunden.' });
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return json(405, { error: 'Bitte per POST senden.' }); }
+  const origin = req.headers.origin;
+  if (origin) { let oh = ''; try { oh = new URL(origin).hostname; } catch {} if (!validHosts.has(oh)) return json(403, { error: 'Ungültiger Ursprung.' }); }
+  let fields;
+  try { fields = await readBody(req); } catch (error) { return json(error.status || 400, { error: error.status === 413 ? 'Die Eingabe ist zu lang.' : 'Ungültiges Formular.' }); }
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',').at(-1).trim();
+  if (rateLimited(ip, kind)) return json(429, { error: 'Zu viele Versuche. Bitte versuch es später noch einmal.' });
+  if (kind === 'bestaetigen') { const r = await handleBestaetigen(fields); return json(r.status, r.body); }
+
+  const check = validate(kind, fields, { offers: offersBySlug });
+  if (!check.ok) return json(422, { error: 'Bitte prüfe die markierten Felder.', errors: check.errors });
+  if (!env.MOSPARO_HOST || !env.MOSPARO_PRIVATE_KEY) return json(503, { error: 'Die Spamprüfung ist gerade nicht verfügbar.' });
+  if (!fields._mosparo_submitToken || !fields._mosparo_validationToken) return json(422, { error: 'Bitte bestätige noch die Spamprüfung.' });
+  try {
+    const names = mosparoFieldNames(kind).filter(n => Object.hasOwn(fields, n));
+    const data = Object.fromEntries(names.map(n => [n, String(fields[n])]));
+    const result = await verifyMosparo(data, String(fields._mosparo_submitToken), String(fields._mosparo_validationToken));
+    if (!result.valid) { console.warn(JSON.stringify({ event: 'mosparo_rejected', kind, reason: result.reason })); return json(422, { error: 'Die Spamprüfung ist fehlgeschlagen. Bitte lade die Seite neu und versuch es noch einmal.' }); }
+  } catch { console.error(JSON.stringify({ event: 'mosparo_unavailable', kind })); return json(503, { error: 'Die Spamprüfung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal.' }); }
+  if (!mailConfigured()) return json(503, { error: 'Der Versand ist gerade nicht verfügbar.' });
+
+  const publicHost = validHosts.has(host) && host !== 'www.' + CANON && host !== 'localhost' && host !== '127.0.0.1' ? host : CANON;
+  const handler = { anfrage: handleAnfrage, betriebsrat: handleBetriebsrat, partner: handlePartner }[kind];
+  const r = await handler(check.values, { publicHost });
+  return json(r.status, r.body);
+}
+
+const server = http.createServer(async (req, res) => {
+  try {
+    const host = String(req.headers.host || '').split(':')[0].toLowerCase();
+    const canonical = host === CANON;
+    const url = new URL(req.url, 'http://localhost');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader('Content-Security-Policy', csp());
+    if (canonical) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+    if (!canonical && host !== 'www.' + CANON) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
+
+    if (host === 'www.' + CANON) { res.writeHead(301, { Location: `https://${CANON}${url.pathname}${url.search}` }); return res.end(); }
+    if (url.pathname.startsWith('/api/')) return await api(req, res, url, host, json);
+    if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405, { Allow: 'GET, HEAD' }); return res.end(); }
+
+    const oldId = url.searchParams.get('page_id') || url.searchParams.get('p');
+    if (oldId && OLD_IDS[oldId]) { res.writeHead(301, { Location: OLD_IDS[oldId] }); return res.end(); }
+    if (REDIRECTS[url.pathname]) { res.writeHead(301, { Location: REDIRECTS[url.pathname] + (REDIRECTS[url.pathname].includes('#') ? '' : url.search) }); return res.end(); }
+    if (url.pathname === '/robots.txt') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' });
+      return res.end(canonical ? `User-agent: *\nAllow: /\nDisallow: /danke/\nDisallow: /bestaetigen/\nDisallow: /api/\nSitemap: https://${CANON}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n');
+    }
+
+    let decoded; try { decoded = decodeURIComponent(url.pathname); } catch { res.writeHead(400); return res.end(); }
+    if (decoded.includes('\0') || decoded.includes('\\')) { res.writeHead(400); return res.end(); }
+    let file = path.join(distDir, path.posix.normalize(decoded));
+    if (file !== distDir && !file.startsWith(distDir + path.sep)) { res.writeHead(400); return res.end(); }
+    let stat; try { stat = await fs.stat(file); } catch {}
+    if (stat?.isDirectory()) {
+      if (!url.pathname.endsWith('/')) { res.writeHead(301, { Location: url.pathname + '/' + url.search }); return res.end(); }
+      file = path.join(file, 'index.html');
+      try { stat = await fs.stat(file); } catch { stat = null; }
+    }
+    let status = 200;
+    if (!stat?.isFile()) { status = 404; file = path.join(distDir, '404.html'); }
+    let data = await fs.readFile(file);
+    const ext = path.extname(file);
+    if (ext === '.html') {
+      let html = data.toString().replaceAll('__ROBOTS__', canonical ? 'index, follow' : 'noindex, nofollow');
+      if (!canonical) html = html.replace(/<script defer data-domain="[^"]*" src="https:\/\/plausible\.convernatics\.com\/js\/script\.js"><\/script>\n?/g, '');
+      data = Buffer.from(html);
+    }
+    const cache = ext === '.html' || ext === '.xml' || url.pathname === '/angebote.json' ? 'no-cache' : url.pathname.startsWith('/fonts/') && !url.pathname.endsWith('.css') ? 'public, max-age=31536000, immutable' : 'public, max-age=86400';
+    res.writeHead(status, { 'Content-Type': TYPES[ext] || 'application/octet-stream', 'Cache-Control': cache });
+    res.end(req.method === 'HEAD' ? undefined : data);
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'request_failed', code: error.code || error.message }));
+    if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Serverfehler');
+  }
+});
+
+server.listen(port, '0.0.0.0', () => console.info(JSON.stringify({ event: 'listening', port, qa: Boolean(QA), mail: mailConfigured(), clickup: clickup.clickupConfigured() })));
+export { server };
