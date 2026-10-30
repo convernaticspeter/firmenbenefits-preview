@@ -486,52 +486,58 @@ function impressumPage() {
 
 function datenschutzPage() {
   const b = site.betreiber;
+  const mail = `<a href="mailto:${e(b.email)}">${e(b.email)}</a>`;
   const partnerList = offers.map(o => `<li>${e(o.partner)}${o.adresse ? `, ${e(o.adresse)}` : ''} – für Anfragen zum Angebot „${e(o.rabattTitel)}“</li>`).join('');
   const html = `
-<p>Stand: Oktober 2026</p>
+<p>Hier steht, welche Daten wir beim Besuch von firmenbenefits.at, bei Anfragen über unsere Formulare und bei der Kontaktaufnahme mit Betriebsräten verarbeiten. Stand: Oktober 2026.</p>
 <h2>1. Verantwortlicher</h2>
-<p>${e(b.firma)}, Inhaber ${e(b.inhaber)}<br>${e(b.strasse)}, ${e(b.ort)}, ${e(b.land)}<br>E-Mail: <a href="mailto:${e(b.email)}">${e(b.email)}</a>, Telefon: ${e(b.telefon)}</p>
+<p>${e(b.firma)}, Inhaber ${e(b.inhaber)}<br>${e(b.strasse)}, ${e(b.ort)}, ${e(b.land)}<br>E-Mail: ${mail}, Telefon: ${e(b.telefon)}</p>
 <h2>2. Kurz zusammengefasst</h2>
 <ul>
-<li>Diese Website setzt keine Cookies und lädt keine Inhalte von Google, Meta oder anderen Werbenetzwerken. Deshalb gibt es kein Cookie-Banner.</li>
-<li>Für die Besucherstatistik nutzen wir ein selbst betriebenes, cookieloses Plausible.</li>
-<li>Anfragen zu einem Angebot leiten wir nur mit deiner Einwilligung an das jeweilige Partnerunternehmen weiter.</li>
+<li>Diese Website setzt keine Cookies und speichert nichts auf deinem Gerät. Deshalb gibt es auch kein Cookie-Banner.</li>
+<li>Schriften, Spamschutz und Besucherstatistik laufen auf unserem eigenen Server in Österreich – ohne Google, Meta oder andere Werbenetzwerke.</li>
+<li>Eine Anfrage zu einem Angebot geben wir nur mit deiner Einwilligung an das Unternehmen weiter, das den Rabatt gewährt – nicht an deinen Arbeitgeber und nicht an deinen Betriebsrat.</li>
 </ul>
-<h2>3. Hosting und Zugriffsdaten</h2>
-<p>Die Website läuft auf einem Server der netcup GmbH (Daimlerstraße 25, 76185 Karlsruhe, Deutschland) in der EU, die als Auftragsverarbeiter für uns tätig ist. Beim Aufruf verarbeitet der Server technisch notwendige Daten wie IP-Adresse, Zeitpunkt, aufgerufene Seite und Browserkennung. Wir verwenden diese Daten nur, um die Website auszuliefern und vor Missbrauch zu schützen, und speichern sie nicht länger als dafür nötig. Rechtsgrundlage ist unser berechtigtes Interesse an einem sicheren Betrieb (Art. 6 Abs. 1 lit. f DSGVO).</p>
+<h2>3. Hosting und Server-Logfiles</h2>
+<p>Die Website läuft auf einem Server der netcup GmbH (Emmy-Noether-Straße 10, 76131 Karlsruhe, Deutschland) in einem Rechenzentrum in Österreich. netcup verarbeitet die Daten als unser Auftragsverarbeiter.</p>
+<p>Beim Aufruf verarbeitet der Server technisch notwendige Zugriffsdaten: IP-Adresse, Datum und Uhrzeit, aufgerufene Domain, Anfragemethode und Statuscode sowie die Angaben, die dein Browser automatisch mitschickt. Die Zugriffsprotokolle werden regelmäßig rotiert und automatisch gelöscht. Zum Schutz vor Angriffen werten wir Zugriffe lokal auf unserem Server automatisiert aus und sperren auffällige IP-Adressen vorübergehend; dafür werden keine Daten an Dritte übermittelt. Rechtsgrundlage ist unser berechtigtes Interesse an einer sicheren und funktionsfähigen Website (Art. 6 Abs. 1 lit. f DSGVO).</p>
 <h2>4. Schriftarten</h2>
-<p>Die Schriftarten liegen auf unserem eigenen Server. Beim Aufruf der Website wird keine Verbindung zu Google Fonts oder anderen Schriftanbietern aufgebaut.</p>
+<p>Die Schriftarten (Archivo, Source Serif 4) liegen auf unserem Server. Es wird keine Verbindung zu Google Fonts oder anderen Schriftanbietern aufgebaut.</p>
 <h2>5. Besucherstatistik mit Plausible</h2>
-<p>Wir nutzen Plausible Analytics in einer selbst betriebenen Installation (plausible.convernatics.com, Server in der EU). Plausible setzt keine Cookies und speichert keine IP-Adressen; Besuche werden über eine täglich wechselnde, nicht rückführbare Kennung gezählt. Erfasst werden u. a. aufgerufene Seiten, Herkunftsseite, Land, Gerätetyp sowie, ob ein Formular abgeschickt wurde (mit Name des Angebots und ggf. dem Kürzel des weiterleitenden Betriebsrats – ohne Namen oder Kontaktdaten). Rechtsgrundlage ist unser berechtigtes Interesse an einer datensparsamen Reichweitenmessung (Art. 6 Abs. 1 lit. f DSGVO).</p>
+<p>Für eine anonyme Besucherstatistik nutzen wir Plausible Analytics, das wir selbst unter plausible.convernatics.com auf unserem Server in Österreich betreiben. Plausible setzt keine Cookies und speichert nichts auf deinem Gerät. Erfasst werden aufgerufene Seite, Referrer, Browser, Betriebssystem, Gerätetyp und das aus der IP-Adresse abgeleitete Land bzw. die Region. Wir sehen auch, ob ein Formular abgeschickt wurde – mit dem Namen des Angebots und gegebenenfalls dem Kürzel des weiterleitenden Betriebsrats, aber nicht, was im Formular steht. Deine IP-Adresse wird nicht gespeichert; sie fließt nur in eine täglich wechselnde Kennung ein. Rechtsgrundlage ist unser berechtigtes Interesse an einer datensparsamen Reichweitenmessung (Art. 6 Abs. 1 lit. f DSGVO).</p>
 <h2>6. Spamschutz mit mosparo</h2>
-<p>Unsere Formulare schützen wir mit mosparo, das wir selbst auf unserem Server betreiben (spam.firmenbenefits.at). mosparo prüft die Formulareingaben und technische Merkmale wie die IP-Adresse auf Spam-Muster. Es setzt keine Cookies und gibt keine Daten an Dritte weiter; die Prüfdaten werden automatisch nach kurzer Zeit gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse am Schutz vor Spam und Missbrauch (Art. 6 Abs. 1 lit. f DSGVO).</p>
+<p>Unsere Formulare schützen wir mit mosparo, das wir selbst auf unserem Server betreiben (spam.firmenbenefits.at). mosparo prüft die Eingaben und technische Merkmale wie die IP-Adresse auf Spam-Muster, setzt keine Cookies und gibt keine Daten an Dritte weiter. Die Prüfdaten werden automatisch nach kurzer Zeit gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse am Schutz vor Spam und Missbrauch (Art. 6 Abs. 1 lit. f DSGVO).</p>
 <h2>7. Anfragen zu einem Angebot</h2>
-<p>Wenn du über das Formular eines Angebots anfragst, verarbeiten wir Vorname, Nachname, E-Mail, Telefon und Arbeitgeber sowie – wenn du sie angibst – Betriebsrat/Dienststelle, PLZ oder Bezirk und deine Nachricht. Dazu speichern wir, über welches Angebot und welchen Link du gekommen bist (Kürzel des weiterleitenden Betriebsrats und Kampagnenparameter), damit wir messen können, über welche Betriebsräte Anfragen entstehen.</p>
-<p><strong>Weitergabe an das Partnerunternehmen:</strong> Mit deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) leiten wir deine Angaben per E-Mail an das Unternehmen weiter, das das Angebot gewährt, damit es sich bei dir meldet. Das Partnerunternehmen verarbeitet deine Daten danach in eigener Verantwortung. Aktuell sind das:</p>
+<p>Wenn du über das Formular eines Angebots anfragst, verarbeiten wir Vorname, Nachname, E-Mail, Telefon und Arbeitgeber sowie – wenn du sie angibst – Betriebsrat/Dienststelle, PLZ oder Bezirk und deine Nachricht. Dazu speichern wir, über welches Angebot und welchen Link du gekommen bist (Kürzel des weiterleitenden Betriebsrats und Kampagnenparameter wie utm_source). So sehen wir, über welche Betriebsräte Anfragen entstehen.</p>
+<p><strong>Weitergabe an das Partnerunternehmen:</strong> Mit deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) leiten wir deine Angaben per E-Mail an das Unternehmen weiter, das den Rabatt gewährt, damit es sich bei dir meldet. Ab der Weitergabe verarbeitet das Unternehmen deine Daten in eigener Verantwortung. Aktuell sind das:</p>
 <ul>${partnerList}</ul>
-<p>Du bekommst außerdem eine Bestätigung per E-Mail. Deine Einwilligung kannst du jederzeit per E-Mail an <a href="mailto:${e(b.email)}">${e(b.email)}</a> widerrufen; die Rechtmäßigkeit der bis dahin erfolgten Weitergabe bleibt davon unberührt. Die Speicherung der Anfrage bei uns dient der Abwicklung und dem Nachweis gegenüber den Partnerunternehmen (Art. 6 Abs. 1 lit. b und f DSGVO).</p>
+<p>Deine Anfrage geben wir weder an deinen Arbeitgeber noch an deinen Betriebsrat weiter. Du bekommst eine Bestätigung per E-Mail. Die Einwilligung kannst du jederzeit an ${mail} widerrufen; die bis dahin erfolgte Weitergabe bleibt rechtmäßig. Die Speicherung der Anfrage bei uns dient der Abwicklung und dem Nachweis gegenüber den Partnerunternehmen (Art. 6 Abs. 1 lit. b und f DSGVO).</p>
 <h2>8. Anmeldung zur monatlichen Angebotsübersicht</h2>
-<p>Wenn ihr euren Betriebsrat oder eure Personalvertretung anmeldet, verarbeiten wir Organisation, Region, ungefähre Zahl der Beschäftigten, Name, Funktion, E-Mail, Telefon und eure Nachricht. Wir schicken euch damit einmal im Monat die Angebotsübersicht. Rechtsgrundlage ist eure Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die ihr über einen Bestätigungslink per E-Mail bestätigt. Abbestellen geht jederzeit per E-Mail an <a href="mailto:${e(b.email)}">${e(b.email)}</a> oder über den Abmeldelink in jeder Aussendung.</p>
+<p>Wenn ihr euren Betriebsrat oder eure Personalvertretung anmeldet, verarbeiten wir Organisation, Region der Betriebsstätte, ungefähre Zahl der Beschäftigten, Name, Funktion, E-Mail, Telefon und eure Nachricht. Damit schicken wir euch einmal im Monat die aktuellen Angebote zum Weiterleiten. Rechtsgrundlage ist eure Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die ihr zusätzlich über einen Link in einer Bestätigungsmail bestätigt. Ohne diese Bestätigung schicken wir keine Angebotsübersicht. Abbestellen geht jederzeit mit einer kurzen Antwort auf eine unserer Mails oder an ${mail}.</p>
 <h2>9. Anfragen von Unternehmen</h2>
-<p>Wenn Sie uns als Unternehmen ein Angebot vorschlagen, verarbeiten wir Ihre Angaben, um Ihre Anfrage zu beantworten und eine mögliche Zusammenarbeit vorzubereiten (Art. 6 Abs. 1 lit. b DSGVO).</p>
-<h2>10. Auftragsverarbeiter und Empfänger</h2>
+<p>Wenn Sie uns als Unternehmen ein Angebot vorschlagen, verarbeiten wir Ihre Angaben, um die Anfrage zu beantworten und eine mögliche Zusammenarbeit vorzubereiten (Art. 6 Abs. 1 lit. b DSGVO).</p>
+<h2>10. Kontaktaufnahme mit Betriebsräten und Personalvertretungen</h2>
+<p>Wir schreiben Betriebsräte und Personalvertretungen gezielt per E-Mail an, um ihnen firmenbenefits.at vorzustellen. Das Angebot ist für sie kostenlos und für ihre Belegschaft gedacht. Dafür verarbeiten wir Name, Funktion, dienstliche E-Mail-Adresse und gegebenenfalls Telefonnummer sowie Organisation, Gremium und Standort. Die Daten stammen aus öffentlich zugänglichen Quellen, vor allem von Websites der Betriebsräte, Personalvertretungen, Unternehmen, Dienststellen und Gewerkschaften. Wir speichern sie in unserer Kontaktliste, unter anderem in ClickUp.</p>
+<p>Rechtsgrundlage ist unser berechtigtes Interesse, Interessenvertretungen der Beschäftigten über ein Angebot für ihre Belegschaft zu informieren (Art. 6 Abs. 1 lit. f DSGVO). Du kannst dem jederzeit widersprechen – eine kurze Antwort auf unsere Mail oder eine Nachricht an ${mail} genügt. Danach schreiben wir dich nicht mehr an und behalten nur einen Sperrvermerk, damit das so bleibt.</p>
+<h2>11. Auftragsverarbeiter und Empfänger</h2>
 <ul>
-<li><strong>netcup GmbH</strong>, Karlsruhe, Deutschland – Hosting (Rechenzentrum in der EU) der Website, von Plausible und mosparo.</li>
-<li><strong>FunFirst s.r.o. (Emailit)</strong>, Prag, Tschechien – Versand der E-Mails, die die Website verschickt (Weiterleitung, Bestätigungen).</li>
-<li><strong>Mango Technologies, Inc. (ClickUp)</strong>, San Diego, USA – Ablage und Bearbeitung der Anfragen in unserem Projekt-Tool. Die Übermittlung in die USA stützt sich auf das EU-US Data Privacy Framework und die EU-Standardvertragsklauseln.</li>
-<li><strong>Microsoft Ireland Operations Ltd.</strong>, Dublin, Irland (Microsoft 365) – unser E-Mail-Postfach, in dem Kopien der Anfragen eingehen.</li>
+<li><strong>netcup GmbH</strong>, Karlsruhe, Deutschland – Hosting von Website, Plausible und mosparo (Rechenzentrum in Österreich).</li>
+<li><strong>FunFirst s.r.o. (Emailit)</strong>, Prag, Tschechien – Versand der E-Mails, die die Website verschickt (Weiterleitung an Partner, Bestätigungen).</li>
+<li><strong>Mango Technologies, Inc. (ClickUp)</strong>, 350 Tenth Ave, Suite 500, San Diego, CA 92101, USA – Ablage und Bearbeitung der Anfragen und Kontakte in unserem Aufgaben-Tool. ClickUp verarbeitet die Daten auch in den USA; Grundlage dafür sind die Standardvertragsklauseln der EU-Kommission (Art. 46 Abs. 2 lit. c DSGVO).</li>
+<li><strong>Microsoft Ireland Operations Limited</strong>, Dublin, Irland (Microsoft 365) – E-Mail-Postfächer @firmenbenefits.at. Eine Übermittlung an die Microsoft Corporation in den USA ist nicht ausgeschlossen; Grundlage sind der Angemessenheitsbeschluss zum EU-US Data Privacy Framework, nach dem Microsoft zertifiziert ist, sowie Standardvertragsklauseln. Mails an @convernatics.com laufen über unseren eigenen Mailserver in Österreich.</li>
 <li>Die jeweiligen <strong>Partnerunternehmen</strong> (siehe Punkt 7) als eigenständige Verantwortliche.</li>
 </ul>
-<h2>11. Speicherdauer</h2>
+<h2>12. Speicherdauer</h2>
 <ul>
 <li>Anfragen zu Angeboten und von Unternehmen speichern wir bis zu drei Jahre ab der Anfrage, um Rückfragen zu klären und die Zusammenarbeit mit den Partnerunternehmen nachzuweisen. Danach löschen wir sie oder behalten nur anonyme Zählungen.</li>
-<li>Anmeldungen zur Angebotsübersicht speichern wir, bis ihr sie abbestellt. Den Nachweis eurer Einwilligung bewahren wir danach noch bis zu drei Jahre auf.</li>
-<li>Gesetzliche Aufbewahrungspflichten (z. B. für Rechnungen) bleiben unberührt.</li>
+<li>Anmeldungen zur Angebotsübersicht speichern wir bis zum Widerruf; den Nachweis der Einwilligung danach noch bis zu drei Jahre.</li>
+<li>Nach einem Widerspruch gegen die Kontaktaufnahme bleibt nur der Sperrvermerk.</li>
+<li>Gesetzliche Aufbewahrungspflichten bleiben unberührt.</li>
 </ul>
-<h2>12. Deine Rechte</h2>
-<p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie das Recht, eine Einwilligung jederzeit zu widerrufen. Schreib uns dazu an <a href="mailto:${e(b.email)}">${e(b.email)}</a>.</p>
-<p>Wenn du meinst, dass wir deine Daten nicht rechtmäßig verarbeiten, kannst du dich bei der Österreichischen Datenschutzbehörde beschweren: Barichgasse 40–42, 1030 Wien, <a href="mailto:dsb@dsb.gv.at">dsb@dsb.gv.at</a>, <a href="https://www.dsb.gv.at" rel="noopener">www.dsb.gv.at</a>.</p>`;
-  return legalPage({ title: 'Datenschutzerklärung', urlPath: '/datenschutz/', h1: 'Datenschutzerklärung', html, description: 'Datenschutzerklärung von firmenbenefits.at: Formulare, Weitergabe an Partnerunternehmen, Plausible und mosparo.' });
+<h2>13. Deine Rechte</h2>
+<p>Du hast nach Maßgabe der DSGVO das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Datenübertragbarkeit. Verarbeiten wir deine Daten aufgrund berechtigter Interessen, kannst du jederzeit widersprechen (Art. 21 DSGVO). Eine Einwilligung kannst du jederzeit mit Wirkung für die Zukunft widerrufen. Schreib uns dazu an ${mail}.</p>
+<p>Wenn du meinst, dass die Verarbeitung deiner Daten gegen Datenschutzrecht verstößt, kannst du dich bei der Österreichischen Datenschutzbehörde beschweren: Barichgasse 40–42, 1030 Wien, Telefon +43 1 52 152-0, <a href="mailto:dsb@dsb.gv.at">dsb@dsb.gv.at</a>.</p>`;
+  return legalPage({ title: 'Datenschutzerklärung', urlPath: '/datenschutz/', h1: 'Datenschutzerklärung', html, description: 'Datenschutzerklärung von firmenbenefits.at: Formulare, Weitergabe an Partnerunternehmen, Kontaktaufnahme mit Betriebsräten, Plausible und mosparo.' });
 }
 
 function thanksPage({ urlPath, title, h1, html }) {

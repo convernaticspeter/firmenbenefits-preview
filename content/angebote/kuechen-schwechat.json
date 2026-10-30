@@ -2,6 +2,11 @@
   "slug": "kuechen-schwechat",
   "aktiv": true,
   "reihenfolge": 20,
+  "aliase": [
+    "kuechen",
+    "kueche",
+    "kuechenstudio"
+  ],
   "kategorie": "Küchen",
   "partner": "Küchenstudio Schwechat",
   "partnerKurz": "Das Küchenstudio Schwechat",
@@ -17,10 +22,18 @@
   "mailHinweis": "10 % auf Economy-Küchen, 15 % auf Premium-Küchen, zusätzlich 10 % on top für Sofort-Entscheider",
   "teaser": "Markenküchen u. a. von Systhema und Burger. Termine auch abends und am Wochenende.",
   "lead": "Beim Küchenstudio Schwechat: Markenküchen u. a. von Systhema und Burger, geplant von ausgebildeten Küchenplaner:innen und vom Tischler montiert. Termine auch abends und am Wochenende.",
-  "regionen": ["wien", "baden", "bruck-an-der-leitha", "gaenserndorf", "moedling"],
+  "regionen": [
+    "wien",
+    "baden",
+    "bruck-an-der-leitha",
+    "gaenserndorf",
+    "moedling"
+  ],
   "regionText": "Wien und die Bezirke Baden, Bruck an der Leitha, Gänserndorf und Mödling",
   "gueltigBis": "2027-02-01",
-  "empfaenger": ["team@kuechenstudio-schwechat.at"],
+  "empfaenger": [
+    "team@kuechenstudio-schwechat.at"
+  ],
   "website": "",
   "websiteLabel": "",
   "portraitTitel": "Über das Küchenstudio Schwechat",
@@ -36,9 +49,18 @@
   ],
   "adresse": "Am Hauptplatz 7/2, 2320 Schwechat",
   "schritte": [
-    ["Anfrage schicken", "Formular unten ausfüllen. Das dauert eine Minute."],
-    ["Das Küchenstudio meldet sich", "Ihr vereinbart einen Planungstermin im Studio in Schwechat – auf Wunsch auch abends oder am Wochenende."],
-    ["Rabatt nutzen", "10 % auf Economy-, 15 % auf Premium-Küchen und zusätzlich 10 % on top, wenn du dich sofort entscheidest. Die Details erklärt dir das Küchenstudio bei der Planung."]
+    [
+      "Anfrage schicken",
+      "Formular unten ausfüllen. Das dauert eine Minute."
+    ],
+    [
+      "Das Küchenstudio meldet sich",
+      "Ihr vereinbart einen Planungstermin im Studio in Schwechat – auf Wunsch auch abends oder am Wochenende."
+    ],
+    [
+      "Rabatt nutzen",
+      "10 % auf Economy-, 15 % auf Premium-Küchen und zusätzlich 10 % on top, wenn du dich sofort entscheidest. Die Details erklärt dir das Küchenstudio bei der Planung."
+    ]
   ],
   "formHinweis": "Wir leiten deine Anfrage an das Küchenstudio Schwechat weiter. Das Team meldet sich persönlich bei dir.",
   "nachrichtPlatzhalter": "z. B. Neubau oder Umbau, ungefähre Raumgröße, Wunschtermin",

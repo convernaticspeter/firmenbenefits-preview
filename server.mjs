@@ -17,6 +17,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(root, 'dist');
 const { site, offersBySlug } = await loadContent();
 const CANON = site.canonicalHost;
+const offerAliases = Object.fromEntries(Object.values(offersBySlug).flatMap(o => [[o.slug, o.slug], ...(o.aliase || []).map(a => [a, o.slug])]));
 const previewHosts = (env.PREVIEW_HOSTS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 const validHosts = new Set([CANON, 'www.' + CANON, ...previewHosts, 'localhost', '127.0.0.1']);
 const port = Number(env.PORT || 3000);
@@ -197,6 +198,12 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname.startsWith('/api/')) return await api(req, res, url, host, json);
     if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405, { Allow: 'GET, HEAD' }); return res.end(); }
 
+    // Links aus den Betriebsrats-Mails: /?angebot=<slug|alias>&br=<id>#anfrage → Angebotsseite (Fragment bleibt im Browser erhalten)
+    const wanted = url.pathname === '/' ? (url.searchParams.get('angebot') || '').toLowerCase() : '';
+    if (wanted && offerAliases[wanted]) {
+      const q = new URLSearchParams(url.search); q.delete('angebot');
+      res.writeHead(302, { Location: `/angebote/${offerAliases[wanted]}/${q.toString() ? '?' + q : ''}` }); return res.end();
+    }
     const oldId = url.searchParams.get('page_id') || url.searchParams.get('p');
     if (oldId && OLD_IDS[oldId]) { res.writeHead(301, { Location: OLD_IDS[oldId] }); return res.end(); }
     if (REDIRECTS[url.pathname]) { res.writeHead(301, { Location: REDIRECTS[url.pathname] + (REDIRECTS[url.pathname].includes('#') ? '' : url.search) }); return res.end(); }
