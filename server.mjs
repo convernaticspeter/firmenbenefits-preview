@@ -241,5 +241,5 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, '0.0.0.0', () => console.info(JSON.stringify({ event: 'listening', port, qa: Boolean(QA), mail: mailConfigured(), clickup: clickup.clickupConfigured() })));
+server.listen(port, () => console.info(JSON.stringify({ event: 'listening', port, qa: Boolean(QA), mail: mailConfigured(), clickup: clickup.clickupConfigured() })));
 export { server };
