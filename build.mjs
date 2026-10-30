@@ -137,13 +137,13 @@ function renderFields(fields, overrides = {}) {
   return out;
 }
 
-function renderForm(formKey, { submit, checkboxLabel, hiddenValues = {}, note, optionalSummary, overrides = {} }) {
+function renderForm(formKey, { submit, checkboxLabel, hiddenValues = {}, hiddenNames, note, optionalSummary, overrides = {} }) {
   const form = FORMS[formKey];
   const visible = form.fields.filter(f => f.type !== 'checkbox');
   const main = visible.filter(f => f.group !== 'optional');
   const optional = visible.filter(f => f.group === 'optional');
   const checkbox = form.fields.find(f => f.type === 'checkbox');
-  const hidden = form.hidden.map(n => `<input type="hidden" name="${n}" value="${e(hiddenValues[n] || '')}">`).join('');
+  const hidden = (hiddenNames || form.hidden).map(n => `<input type="hidden" name="${n}" value="${e(hiddenValues[n] || '')}">`).join('');
   return `<form class="fb-form" data-form="${formKey}" action="${form.endpoint}" method="post" novalidate>
 ${hidden}
 <p class="form-hint">Felder ohne „optional“ bitte ausfüllen.</p>
@@ -292,7 +292,10 @@ function offerPage(o) {
     hiddenValues: { angebot: o.slug },
     optionalSummary: 'Optional: Betriebsrat, PLZ oder Nachricht ergänzen',
     checkboxLabel: `Ich bin einverstanden, dass firmenbenefits.at meine Angaben an ${e(o.partner)} weitergibt, damit ${e(o.partner)} sich wegen meiner Anfrage bei mir meldet.`,
-    note: `Deine Angaben verwenden wir nur für diese Anfrage. Mehr in der <a href="/datenschutz/">Datenschutzerklärung</a>.`,
+    hiddenNames: o.auswertung ? undefined : ['angebot'],
+    note: o.auswertung
+      ? `Deine Angaben verwenden wir nur für diese Anfrage. Mehr in der <a href="/datenschutz/">Datenschutzerklärung</a>.`
+      : `Deine Anfrage geht direkt an ${e(o.partner)}. Wir speichern keine Kopie. Mehr in der <a href="/datenschutz/">Datenschutzerklärung</a>.`,
     overrides: o.nachrichtPlatzhalter ? { nachricht: { placeholder: o.nachrichtPlatzhalter } } : {}
   });
   const body = `
@@ -461,9 +464,9 @@ function datenschutzPage() {
 <h2>6. Spamschutz mit mosparo</h2>
 <p>Unsere Formulare schützen wir mit mosparo, das wir selbst auf unserem Server betreiben (spam.firmenbenefits.at). mosparo prüft die Eingaben und technische Merkmale wie die IP-Adresse auf Spam-Muster, setzt keine Cookies und gibt keine Daten an Dritte weiter. Die Prüfdaten werden automatisch nach kurzer Zeit gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse am Schutz vor Spam und Missbrauch (Art. 6 Abs. 1 lit. f DSGVO).</p>
 <h2>7. Anfragen zu einem Angebot</h2>
-<p>Wenn du über das Formular eines Angebots anfragst, verarbeiten wir Vorname, Nachname, E-Mail, Telefon und Arbeitgeber sowie – wenn du sie angibst – Betriebsrat/Dienststelle, PLZ oder Bezirk und deine Nachricht. Dazu speichern wir, über welches Angebot und welchen Link du gekommen bist (Kürzel des weiterleitenden Betriebsrats und Kampagnenparameter wie utm_source). So sehen wir, über welche Betriebsräte Anfragen entstehen.</p>
+<p>Wenn du über das Formular eines Angebots anfragst, verarbeiten wir Vorname, Nachname, E-Mail, Telefon und Arbeitgeber sowie – wenn du sie angibst – Betriebsrat/Dienststelle, PLZ oder Bezirk und deine Nachricht. Bei den meisten Angeboten speichern wir die Anfrage zusätzlich bei uns, und zwar mit dem Link, über den du gekommen bist (Kürzel des weiterleitenden Betriebsrats und Kampagnenparameter wie utm_source). So sehen wir, über welche Betriebsräte Anfragen entstehen. Bei Angeboten, bei denen wir das nicht brauchen, leiten wir deine Anfrage nur weiter und speichern keine Kopie – das steht dann direkt beim Formular.</p>
 <p><strong>Weitergabe an das Partnerunternehmen:</strong> Mit deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) leiten wir deine Angaben per E-Mail an das Unternehmen weiter, das den Rabatt gewährt, damit es sich bei dir meldet. Welches Unternehmen das ist, steht namentlich auf der Angebotsseite und im Einwilligungstext direkt über dem Absende-Button. Ab der Weitergabe verarbeitet das Unternehmen deine Daten in eigener Verantwortung.</p>
-<p>Deine Anfrage geben wir weder an deinen Arbeitgeber noch an deinen Betriebsrat weiter. Du bekommst eine Bestätigung per E-Mail. Die Einwilligung kannst du jederzeit an ${mail} widerrufen; die bis dahin erfolgte Weitergabe bleibt rechtmäßig. Die Speicherung der Anfrage bei uns dient der Abwicklung und dem Nachweis gegenüber den Partnerunternehmen (Art. 6 Abs. 1 lit. b und f DSGVO).</p>
+<p>Deine Anfrage geben wir weder an deinen Arbeitgeber noch an deinen Betriebsrat weiter. Du bekommst eine Bestätigung per E-Mail. Die Einwilligung kannst du jederzeit an ${mail} widerrufen; die bis dahin erfolgte Weitergabe bleibt rechtmäßig. Soweit wir die Anfrage speichern, dient das der Abwicklung und dem Nachweis gegenüber den Partnerunternehmen (Art. 6 Abs. 1 lit. b und f DSGVO).</p>
 <h2>8. Anmeldung zur monatlichen Angebotsübersicht</h2>
 <p>Wenn ihr euren Betriebsrat oder eure Personalvertretung anmeldet, verarbeiten wir Organisation, Region der Betriebsstätte, ungefähre Zahl der Beschäftigten, Name, Funktion, E-Mail, Telefon und eure Nachricht. Damit schicken wir euch einmal im Monat die aktuellen Angebote zum Weiterleiten. Rechtsgrundlage ist eure Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die ihr zusätzlich über einen Link in einer Bestätigungsmail bestätigt. Ohne diese Bestätigung schicken wir keine Angebotsübersicht. Abbestellen geht jederzeit mit einer kurzen Antwort auf eine unserer Mails oder an ${mail}.</p>
 <h2>9. Anfragen von Unternehmen</h2>

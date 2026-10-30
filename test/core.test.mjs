@@ -83,7 +83,8 @@ test('mails: Betriebsrat-DOI-Link und Partner-Bestätigung', () => {
   const m = betriebsratMessages({ id: 'FB-2610-ABCDE', v, site, doiUrl: 'https://x/bestaetigen/?id=1', offers });
   assert.ok(m.confirmation.text.includes('https://x/bestaetigen/?id=1'));
   assert.ok(!m.confirmation.text.includes('/angebote/'), 'keine öffentliche Angebotsübersicht verlinken');
-  for (const o of offers) assert.ok(m.task.markdown.includes(`/angebote/${o.slug}/?br=fb-2610-abcde&utm_source=betriebsrat`));
+  for (const o of offers.filter(o => o.auswertung)) assert.ok(m.task.markdown.includes(`/angebote/${o.slug}/?br=fb-2610-abcde&utm_source=betriebsrat`));
+  for (const o of offers.filter(o => !o.auswertung)) assert.ok(m.task.markdown.includes(`/angebote/${o.slug}/`) && !m.task.markdown.includes(`/angebote/${o.slug}/?br=`));
   const withBr = betriebsratMessages({ id: 'FB-2610-ABCDE', v: { ...v, br: 'g042' }, site, doiUrl: 'x', offers });
   assert.ok(withBr.copy.text.includes('?br=g042&'));
   const p = partnerMessages({ id: 'FB-2610-ABCDE', v: validate('partner', { firma: 'X', branche: 'Y', standort: 'Wien', rabattidee: '10 %', name: 'A', email: 'a@b.at' }).values, site });
@@ -114,4 +115,18 @@ test('build: Angebote sind nicht öffentlich auffindbar', () => {
     assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
     assert.ok(html.includes('data-form="anfrage"') && html.includes(`value="${o.slug}"`));
   }
+});
+
+test('Angebot ohne Auswertung (Michelle): keine Herkunftsdaten, kein br-Feld', () => {
+  const o = offersBySlug['personal-training-wien'];
+  assert.equal(o.auswertung, false);
+  assert.equal(offersBySlug['kuechen-schwechat'].auswertung, true);
+  const r = validate('anfrage', { ...anfrage, angebot: o.slug, utm_campaign: 'x' }, { offers: offersBySlug });
+  assert.equal(r.ok, true, JSON.stringify(r.errors));
+  assert.equal(r.values.br, ''); assert.equal(r.values.utm_source, ''); assert.equal(r.values.utm_campaign, '');
+  const html = readFileSync(new URL(`../dist/angebote/${o.slug}/index.html`, import.meta.url), 'utf8');
+  assert.ok(!html.includes('name="br"') && !html.includes('name="utm_source"'));
+  assert.ok(html.includes('Wir speichern keine Kopie'));
+  const k = readFileSync(new URL('../dist/angebote/kuechen-schwechat/index.html', import.meta.url), 'utf8');
+  assert.ok(k.includes('name="br"'));
 });

@@ -2,6 +2,7 @@
   "slug": "personal-training-wien",
   "aktiv": true,
   "reihenfolge": 10,
+  "auswertung": false,
   "aliase": [
     "personal-training",
     "training"

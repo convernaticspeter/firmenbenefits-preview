@@ -111,7 +111,7 @@ async function initForms() {
         const props = {};
         if (kind === 'anfrage') props.angebot = form.elements.angebot.value;
         if (kind === 'betriebsrat') props.region = form.elements.region.value;
-        if (tracking.br) props.br = tracking.br;
+        if (tracking.br && form.elements.br) props.br = tracking.br;
         const next = new URL(THANKS[kind], location.origin);
         next.searchParams.set('id', data.id);
         if (kind === 'anfrage') {
@@ -119,7 +119,7 @@ async function initForms() {
           const partner = form.closest('[data-partner]')?.dataset.partner;
           if (partner) next.searchParams.set('partner', partner);
         }
-        if (tracking.br) next.searchParams.set('br', tracking.br);
+        if (tracking.br && form.elements.br) next.searchParams.set('br', tracking.br);
         let navigated = false;
         const go = () => { if (!navigated) { navigated = true; location.assign(next.pathname + next.search); } };
         window.plausible(EVENTS[kind], { props, callback: go });

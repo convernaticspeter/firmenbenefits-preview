@@ -70,8 +70,24 @@ async function handleAnfrage(v, ctx) {
   const id = requestId();
   const now = new Date();
   const first = anfrageMessages({ id, v, offer, site, now });
-  const stored = await store(first.task);
   const recipients = qa ? [qa] : offer.empfaenger;
+  if (!offer.auswertung) {
+    // Offer without reporting: forward only. Copy to firmenbenefits solely as fallback if the partner mail fails.
+    const partnerResult = await send({ to: recipients, qa, ...first.partner });
+    let copyResult = { ok: false, skipped: true };
+    if (!partnerResult.ok) {
+      const fallback = anfrageMessages({ id, v, offer, site, now, partnerStatus: `FEHLGESCHLAGEN (${partnerResult.error}) – bitte manuell an ${offer.empfaenger.join(', ')} weiterleiten` });
+      copyResult = await send({ to: copyTo(qa), qa, ...fallback.copy });
+    }
+    if (!partnerResult.ok && !copyResult.ok) {
+      log('anfrage', id, { qa: Boolean(qa), angebot: offer.slug, auswertung: false, partner: false, copy: false, confirmation: false });
+      return { status: 502, body: { error: 'Deine Anfrage konnte gerade nicht übermittelt werden. Bitte versuch es noch einmal.' } };
+    }
+    const confResult = await send({ to: v.email, qa, ...first.confirmation });
+    log('anfrage', id, { qa: Boolean(qa), angebot: offer.slug, auswertung: false, partner: partnerResult.ok, copy: copyResult.skipped ? 'skipped' : copyResult.ok, confirmation: confResult.ok });
+    return { status: 200, body: { ok: true, id } };
+  }
+  const stored = await store(first.task);
   const partnerResult = await send({ to: recipients, qa, ...first.partner });
   const partnerStatus = partnerResult.ok ? `zugestellt an ${recipients.join(', ')}${qa ? ' (QA-Umleitung)' : ''}` : `FEHLGESCHLAGEN (${partnerResult.error}) – bitte manuell an ${offer.empfaenger.join(', ')} weiterleiten`;
   const msgs = anfrageMessages({ id, v, offer, site, now, clickupUrl: stored?.url || '', partnerStatus });
