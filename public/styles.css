@@ -340,7 +340,8 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--b
 
 /* layout refinements after visual QA */
 .hero .benefit-card { min-height: 0; justify-content: flex-start; gap: 22px; }
-.hero-grid { align-items: start; }
+.hero-grid { align-items: center; }
+h1, h2 { text-wrap: balance; }
 .hero .benefit-card { margin-top: 8px; }
 .contact { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(28px, 4vw, 56px); }
 .contact h2 { font-size: clamp(30px, 3.4vw, 46px); line-height: 1.02; }

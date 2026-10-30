@@ -30,30 +30,6 @@ menu?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.
 document.addEventListener('keydown', e => { if (e.key === 'Escape') menu?.removeAttribute('open'); });
 document.addEventListener('click', e => { if (menu?.open && !e.target.closest('.mobile-menu')) menu.removeAttribute('open'); });
 
-// --- Region filter (/angebote/) ---
-const filterButtons = [...document.querySelectorAll('[data-filter]')];
-if (filterButtons.length) {
-  const cards = [...document.querySelectorAll('#angebot-liste .offer-card')];
-  const empty = document.getElementById('angebot-leer');
-  const apply = region => {
-    let shown = 0;
-    for (const card of cards) {
-      const ok = region === 'alle' || card.dataset.regionen.split(' ').includes(region);
-      card.hidden = !ok; if (ok) shown++;
-    }
-    for (const b of filterButtons) b.setAttribute('aria-pressed', String(b.dataset.filter === region));
-    if (empty) empty.hidden = shown > 0;
-  };
-  filterButtons.forEach(b => b.addEventListener('click', () => {
-    apply(b.dataset.filter);
-    const url = new URL(location.href);
-    if (b.dataset.filter === 'alle') url.searchParams.delete('region'); else url.searchParams.set('region', b.dataset.filter);
-    history.replaceState(null, '', url);
-  }));
-  const initial = query.get('region');
-  if (initial && filterButtons.some(b => b.dataset.filter === initial)) apply(initial);
-}
-
 // --- Forms ---
 const THANKS = { anfrage: '/danke/anfrage/', betriebsrat: '/danke/betriebsrat/', partner: '/danke/partner/' };
 const EVENTS = { anfrage: 'Anfrage gesendet', betriebsrat: 'Betriebsrat angemeldet', partner: 'Partner-Anfrage gesendet' };
@@ -138,7 +114,11 @@ async function initForms() {
         if (tracking.br) props.br = tracking.br;
         const next = new URL(THANKS[kind], location.origin);
         next.searchParams.set('id', data.id);
-        if (kind === 'anfrage') next.searchParams.set('angebot', form.elements.angebot.value);
+        if (kind === 'anfrage') {
+          next.searchParams.set('angebot', form.elements.angebot.value);
+          const partner = form.closest('[data-partner]')?.dataset.partner;
+          if (partner) next.searchParams.set('partner', partner);
+        }
         if (tracking.br) next.searchParams.set('br', tracking.br);
         let navigated = false;
         const go = () => { if (!navigated) { navigated = true; location.assign(next.pathname + next.search); } };
@@ -160,13 +140,8 @@ if (/^FB-\d{4}-[A-Z0-9]{5}$/.test(id)) {
   document.querySelectorAll('[data-fill="id"]').forEach(el => { el.textContent = id; });
   document.querySelectorAll('[data-show="id"]').forEach(el => { el.hidden = false; });
 }
-const slug = query.get('angebot');
-if (slug && document.querySelector('[data-fill="partner"]')) {
-  fetch('/angebote.json').then(r => r.json()).then(map => {
-    const partner = map[slug]?.partner;
-    if (partner) document.querySelectorAll('[data-fill="partner"]').forEach(el => { el.textContent = partner; });
-  }).catch(() => {});
-}
+const partnerName = (query.get('partner') || '').trim().slice(0, 80);
+if (partnerName) document.querySelectorAll('[data-fill="partner"]').forEach(el => { el.textContent = partnerName; });
 
 // --- Double opt-in confirmation (/bestaetigen/) ---
 const doi = document.querySelector('form.doi-form');

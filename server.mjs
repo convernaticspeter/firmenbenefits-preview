@@ -70,11 +70,12 @@ async function handleAnfrage(v) {
 async function handleBetriebsrat(v, ctx) {
   const id = requestId();
   const now = new Date();
-  const first = betriebsratMessages({ id, v, site, now, doiUrl: '' });
+  const offers = Object.values(offersBySlug);
+  const first = betriebsratMessages({ id, v, site, now, doiUrl: '', offers });
   const stored = await store(first.task);
   const tid = stored?.id || '';
   const doiUrl = `https://${ctx.publicHost}/bestaetigen/?id=${encodeURIComponent(id)}&tid=${encodeURIComponent(tid)}&sig=${doiSig(id, tid)}`;
-  const msgs = betriebsratMessages({ id, v, site, now, doiUrl, clickupUrl: stored?.url || '' });
+  const msgs = betriebsratMessages({ id, v, site, now, doiUrl, clickupUrl: stored?.url || '', offers });
   const [confResult, copyResult] = await Promise.all([send({ to: v.email, ...msgs.confirmation }), send({ to: copyTo(), ...msgs.copy })]);
   log('betriebsrat', id, { br: Boolean(v.br), stored: Boolean(stored), confirmation: confResult.ok, copy: copyResult.ok });
   if (!confResult.ok && !copyResult.ok) return { status: 502, body: { error: 'Die Anmeldung konnte gerade nicht übermittelt werden. Bitte versucht es noch einmal.' } };
@@ -191,7 +192,9 @@ const server = http.createServer(async (req, res) => {
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     res.setHeader('Content-Security-Policy', csp());
     if (canonical) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
-    if (!canonical && host !== 'www.' + CANON) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    // Offer pages are unlisted: only reachable via the individual links in the Betriebsrat mails.
+    const unlisted = /^\/(angebote|danke|bestaetigen)\//.test(url.pathname);
+    if ((!canonical && host !== 'www.' + CANON) || unlisted) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
 
     if (host === 'www.' + CANON) { res.writeHead(301, { Location: `https://${CANON}${url.pathname}${url.search}` }); return res.end(); }
@@ -204,6 +207,7 @@ const server = http.createServer(async (req, res) => {
       const q = new URLSearchParams(url.search); q.delete('angebot');
       res.writeHead(302, { Location: `/angebote/${offerAliases[wanted]}/${q.toString() ? '?' + q : ''}` }); return res.end();
     }
+    if (url.pathname === '/angebote/' || url.pathname === '/angebote') { res.writeHead(302, { Location: '/' }); return res.end(); }
     const oldId = url.searchParams.get('page_id') || url.searchParams.get('p');
     if (oldId && OLD_IDS[oldId]) { res.writeHead(301, { Location: OLD_IDS[oldId] }); return res.end(); }
     if (REDIRECTS[url.pathname]) { res.writeHead(301, { Location: REDIRECTS[url.pathname] + (REDIRECTS[url.pathname].includes('#') ? '' : url.search) }); return res.end(); }
@@ -231,7 +235,7 @@ const server = http.createServer(async (req, res) => {
       if (!canonical) html = html.replace(/<script defer data-domain="[^"]*" src="https:\/\/plausible\.convernatics\.com\/js\/script\.js"><\/script>\n?/g, '');
       data = Buffer.from(html);
     }
-    const cache = ext === '.html' || ext === '.xml' || url.pathname === '/angebote.json' ? 'no-cache' : url.pathname.startsWith('/fonts/') && !url.pathname.endsWith('.css') ? 'public, max-age=31536000, immutable' : 'public, max-age=86400';
+    const cache = ext === '.html' || ext === '.xml' ? 'no-cache' : url.pathname.startsWith('/fonts/') && !url.pathname.endsWith('.css') ? 'public, max-age=31536000, immutable' : 'public, max-age=86400';
     res.writeHead(status, { 'Content-Type': TYPES[ext] || 'application/octet-stream', 'Cache-Control': cache });
     res.end(req.method === 'HEAD' ? undefined : data);
   } catch (error) {

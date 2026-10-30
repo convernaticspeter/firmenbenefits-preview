@@ -1,6 +1,7 @@
 // Static site generator: content/*.json + templates → dist/
-// New offer = new file in content/angebote/ → offer page, overview card,
-// homepage teaser and sitemap entry are generated automatically.
+// New offer = new file in content/angebote/ → unlisted offer page with its own
+// request form (noindex, not linked, not in the sitemap). Offers are only reachable
+// via the individual links in the Betriebsrat mails (/angebote/<slug>/?br=<id>&utm_*).
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,7 +37,6 @@ const icon = name => ICONS[name] || ICONS.tag;
 function layout({ title, description, urlPath, body, noindex = false, active = '' }) {
   const canonical = BASE + urlPath;
   const nav = [
-    ['/angebote/', 'Angebote', 'angebote'],
     ['/#ablauf', 'So funktioniert’s', 'ablauf'],
     ['/#fragen', 'Fragen', 'fragen'],
     ['/partner-werden/', 'Partner werden', 'partner']
@@ -91,7 +91,7 @@ ${body}
 <strong>firmenbenefits.at</strong>
 <p class="footer-note">Regionale Betriebe geben ihr Werbebudget als Rabatt an Belegschaften weiter. Für Betriebsräte und Personalvertretungen kostenlos.</p>
 </div>
-<nav aria-label="Footer-Navigation" class="footer-links"><a href="/angebote/">Angebote</a><a href="/#mitmachen">Für Betriebsräte</a><a href="/partner-werden/">Partner werden</a><a href="/#fragen">Fragen</a></nav>
+<nav aria-label="Footer-Navigation" class="footer-links"><a href="/#mitmachen">Für Betriebsräte</a><a href="/partner-werden/">Partner werden</a><a href="/#fragen">Fragen</a></nav>
 <nav aria-label="Rechtliches" class="footer-links"><a href="/impressum/">Impressum</a><a href="/datenschutz/">Datenschutz</a></nav>
 </div>
 <div class="inner conv-credit"><a href="https://convernatics.com" rel="noopener">Website von Convernatics</a></div>
@@ -104,19 +104,6 @@ ${body}
 // ---------- Components ----------
 function regionChips(keys, cls = 'chips') {
   return `<ul class="${cls}" aria-label="Regionen">${keys.map(k => `<li>${e(regionLabel(k))}</li>`).join('')}</ul>`;
-}
-
-function offerCard(o, { headingLevel = 3 } = {}) {
-  const h = `h${headingLevel}`;
-  return `<article class="offer-card" data-regionen="${e(o.regionen.join(' '))}">
-<div class="offer-card-top"><span class="offer-icon">${icon(o.icon)}</span><span class="offer-kat">${e(o.kategorie)}</span></div>
-<${h} class="offer-card-title"><a href="/angebote/${o.slug}/" data-track-link>${e(o.rabattTitel)}</a></${h}>
-<p class="offer-partner">${e(o.partner)}</p>
-<p class="offer-teaser">${e(o.teaser)}</p>
-<p class="offer-meta">${icon('pin')}<span>${e(o.regionText.charAt(0).toUpperCase() + o.regionText.slice(1))}</span></p>
-<p class="offer-meta">${icon('clock')}<span>Gilt im Pilot bis ${e(formatDate(o.gueltigBis))}</span></p>
-<a class="btn primary" href="/angebote/${o.slug}/" data-track-link aria-label="${e(o.partner)}: Angebot ansehen und anfragen">Ansehen &amp; anfragen →</a>
-</article>`;
 }
 
 function field(f0, overrides = {}) {
@@ -178,7 +165,11 @@ function faq(items, openFirst = true) {
 
 // ---------- Pages ----------
 function homePage() {
-  const heroRows = offers.map(o => `<a class="offer-row" href="/angebote/${o.slug}/" data-track-link><span class="icon">${icon(o.icon)}</span><span><strong>${e(o.partner)}</strong><small>${e(o.kategorie)} · ${e(o.regionen.length === 1 ? regionLabel(o.regionen[0]) : 'Wien & NÖ')}</small></span><span class="tag">${e(o.rabattKurz)}</span></a>`).join('');
+  const heroRows = [
+    ['tag', 'Rabatte aus eurer Region', 'neu jeden Monat'],
+    ['form', 'Fertiger Text zum Weiterleiten', 'Mail · Intranet · Aushang'],
+    ['pin', 'Eigener Anfrage-Link je Angebot', 'ohne Ausweis, ohne Code']
+  ].map(([ic, title, sub]) => `<div class="offer-row"><span class="icon">${icon(ic)}</span><span><strong>${title}</strong><small>${sub}</small></span></div>`).join('');
   const brForm = renderForm('betriebsrat', {
     submit: 'Angebotsübersicht anfordern',
     checkboxLabel: 'Ja, schickt uns einmal im Monat die Angebotsübersicht per E-Mail. Wir können das jederzeit abbestellen – eine kurze Mail genügt.',
@@ -193,16 +184,16 @@ function homePage() {
 <p class="lead">Regionale Betriebe geben ihr Werbebudget nicht Google oder Meta, sondern euren Kolleg:innen – als Rabatt. Ihr leitet die Angebote weiter, eure Leute fragen direkt bei uns an. Kein Portal, kein Login, kein Aufwand.</p>
 <div class="hero-actions">
 <a class="btn primary" href="#mitmachen">Angebotsübersicht anfordern →</a>
-<a class="btn secondary" href="/angebote/" data-track-link>Aktuelle Angebote ansehen</a>
+<a class="btn secondary" href="#ablauf">So funktioniert’s</a>
 </div>
 <p class="hero-note">Für Betriebsräte und Personalvertretungen. Einmal im Monat kommt die Übersicht – fertig zum Weiterleiten.</p>
 </div>
-<aside aria-label="Aktuelle Angebote im Pilot" class="benefit-card">
+<aside aria-label="Was in eurer Monatsübersicht steht" class="benefit-card">
 <div class="mock-window">
-<p class="mock-title">Aktuell im Pilot</p>
+<p class="mock-title">Eure Monatsübersicht</p>
 ${heroRows}
 </div>
-<p class="card-caption">Weitere Angebote und Regionen kommen laufend dazu.</p>
+<p class="card-caption">Die Angebote gibt es nur über eure Übersicht – nicht öffentlich im Netz.</p>
 </aside>
 </div>
 </section>
@@ -213,20 +204,13 @@ ${heroRows}
 <div class="stat"><strong>Aus der Region</strong><span>Betriebe aus Wien und Umgebung</span></div>
 </div>
 
-<section class="section" id="angebote">
-<p class="kicker">Aktuelle Angebote</p>
-<h2>Das bekommen eure Kolleg:innen gerade</h2>
-<div class="offer-grid">${offers.map(o => offerCard(o)).join('')}</div>
-<p class="more-link"><a href="/angebote/" data-track-link>Alle Angebote nach Region ansehen →</a></p>
-</section>
-
 <section class="section" id="ablauf">
 <p class="kicker">So funktioniert’s</p>
 <h2>Ihr leitet weiter. Den Rest erledigen wir.</h2>
 ${stepList([
     ['Ihr meldet euch an', 'Über das Formular unten oder mit einem kurzen „Ja“ auf unsere Mail. Wir nehmen euren Betriebsrat in den Verteiler auf.'],
     ['Ihr leitet die Übersicht weiter', 'Einmal im Monat bekommt ihr die aktuellen Angebote – mit einem fertigen Text für Mail, Intranet oder Aushang.'],
-    ['Eure Kolleg:innen fragen an', 'Direkt über das Formular beim jeweiligen Angebot. Der Betrieb meldet sich persönlich und gibt den Rabatt. Ohne Ausweis, ohne Code.']
+    ['Eure Kolleg:innen fragen an', 'Über den Link beim jeweiligen Angebot – jedes Angebot hat sein eigenes kurzes Anfrageformular. Der Betrieb meldet sich persönlich und gibt den Rabatt. Ohne Ausweis, ohne Code.']
   ])}
 </section>
 
@@ -262,6 +246,7 @@ ${faq([
     ['Kostet das unseren Betriebsrat etwas?', 'Nein. firmenbenefits.at ist für Betriebsräte und Personalvertretungen kostenlos. Die Rabatte geben die teilnehmenden Betriebe aus ihrem Werbebudget.'],
     ['Was hat der Betriebsrat davon? Gibt es eine Provision?', 'Eine Provision zahlen wir derzeit nicht, weil wir im Pilot die Einlösungen noch nicht messen. Wenn sich das Modell bewährt, arbeiten wir daran, dass teilnehmende Unternehmen an Betriebsräte spenden, wo das für sie finanziell darstellbar ist. Euer unmittelbarer Vorteil: jeden Monat etwas Konkretes für eure Kolleg:innen, ohne Verhandlungsaufwand.'],
     ['Brauchen unsere Kolleg:innen einen Ausweis oder Code?', 'Nein. Sie schicken ihre Anfrage über das Formular beim jeweiligen Angebot und geben dabei ihren Arbeitgeber an. Der Betrieb meldet sich direkt bei ihnen.'],
+    ['Warum stehen die Angebote nicht auf der Website?', 'Die Rabatte sind ein Vorteil für die Belegschaften, die ihr erreicht. Deshalb gibt es sie nur über eure Monatsübersicht mit eigenen Anfrage-Links – nicht öffentlich im Netz und nicht in Suchmaschinen.'],
     ['Welche Daten bekommt der Betrieb?', 'Nur die Angaben aus der Anfrage – und nur, wenn die anfragende Person der Weitergabe zustimmt. Ihr als Betriebsrat gebt keine Daten eurer Kolleg:innen weiter.'],
     ['Wer darf die Angebote nutzen?', 'Die Beschäftigten, an die ihr die Angebote weitergebt. Manche Angebote gelten nur in bestimmten Regionen – das steht jeweils beim Angebot.'],
     ['Wie oft bekommen wir Post?', 'Einmal im Monat, mit den aktuellen Angeboten und einem Text zum Weiterleiten. Abbestellen geht jederzeit – eine kurze Mail an uns genügt.'],
@@ -295,41 +280,6 @@ ${brForm}
   });
 }
 
-function angebotePage() {
-  const filters = [['alle', 'Alle Regionen'], ...pilotRegionen.map(k => [k, regionLabel(k)])];
-  const body = `
-<section class="page-hero">
-<div class="inner">
-<p class="eyebrow">Pilot bis ${PILOT}</p>
-<h1>Aktuelle Angebote für Beschäftigte</h1>
-<p class="lead">Rabatte von Betrieben aus der Region. Angebot öffnen, Formular ausfüllen, fertig – ohne Ausweis und ohne Code.</p>
-</div>
-</section>
-<section class="section angebote-section">
-<div class="filter" role="group" aria-label="Nach Region filtern">
-<span class="filter-label">Region:</span>
-${filters.map(([k, l], i) => `<button type="button" class="chip-btn" data-filter="${k}" aria-pressed="${i === 0}">${e(l)}</button>`).join('')}
-</div>
-<div class="offer-grid" id="angebot-liste">${offers.map(o => offerCard(o, { headingLevel: 2 })).join('')}</div>
-<p class="empty-state" id="angebot-leer" hidden>Für diese Region gibt es gerade kein Angebot. Neue kommen laufend dazu.</p>
-<div class="info-grid">
-<div class="info-box"><h2>So bekommst du den Rabatt</h2><p>Öffne das Angebot und schick deine Anfrage über das Formular. Der Betrieb meldet sich persönlich bei dir und berücksichtigt den firmenbenefits-Rabatt.</p></div>
-<div class="info-box"><h2>Pilot in Wien und Umgebung</h2><p>Die Angebote gelten im Pilot bis ${PILOT} in Wien und in den Bezirken ${noeBezirke}. Danach kommen laufend weitere dazu.</p></div>
-</div>
-<div class="cta-row">
-<div class="callout slim"><h2>Euer Betriebsrat ist noch nicht dabei?</h2><p>Einmal im Monat die Angebote zum Weiterleiten – kostenlos.</p><a class="btn secondary" href="/#mitmachen" data-track-link>Angebotsübersicht anfordern →</a></div>
-<div class="callout slim light"><h2>Sie sind ein regionaler Betrieb?</h2><p>Geben Sie Belegschaften einen Vorteil statt Klickpreise zu zahlen.</p><a class="btn secondary" href="/partner-werden/" data-track-link>Rabatt-Partner werden →</a></div>
-</div>
-</section>`;
-  return layout({
-    title: 'Aktuelle Angebote für Beschäftigte | firmenbenefits.at',
-    description: `Rabatte von regionalen Betrieben für Beschäftigte in Wien und den Bezirken ${noeBezirke}. Anfrage über das Formular, ohne Ausweis. Pilot bis ${PILOT}.`,
-    urlPath: '/angebote/',
-    body,
-    active: 'angebote'
-  });
-}
-
 function offerPage(o) {
   const until = formatDate(o.gueltigBis);
   const form = renderForm('anfrage', {
@@ -344,11 +294,10 @@ function offerPage(o) {
 <section class="page-hero offer-hero">
 <div class="inner offer-hero-grid">
 <div>
-<nav class="breadcrumb" aria-label="Brotkrumen"><a href="/angebote/" data-track-link>Angebote</a> <span aria-hidden="true">›</span> <span>${e(o.kategorie)}</span></nav>
 <p class="eyebrow">${e(o.kategorie)} · ${e(o.regionen.length === 1 ? 'nur ' + regionLabel(o.regionen[0]) : 'Wien und NÖ-Bezirke')}</p>
 <h1>${e(o.rabattTitel)}</h1>
 <p class="lead">${e(o.lead)}</p>
-<div class="hero-actions"><a class="btn primary" href="#anfrage">Jetzt anfragen →</a><a class="btn secondary" href="/angebote/" data-track-link>Alle Angebote</a></div>
+<div class="hero-actions"><a class="btn primary" href="#anfrage">Jetzt anfragen →</a></div>
 </div>
 <aside class="facts" aria-label="Das Angebot auf einen Blick">
 <p class="facts-title">Dein firmenbenefits-Rabatt</p>
@@ -381,7 +330,7 @@ ${o.website ? `<p class="partner-link"><a href="${e(o.website)}" rel="noopener" 
 ${stepList(o.schritte)}
 </section>
 
-<section class="section contact" id="anfrage">
+<section class="section contact" id="anfrage" data-partner="${e(o.partner)}">
 <div>
 <p class="kicker">Anfrage</p>
 <h2>Jetzt anfragen</h2>
@@ -395,7 +344,7 @@ ${form}
     description: o.seoBeschreibung || `${o.rabattTitel} bei ${o.partner}. Gilt im Pilot bis ${until}.`,
     urlPath: `/angebote/${o.slug}/`,
     body,
-    active: 'angebote'
+    noindex: true
   });
 }
 
@@ -487,7 +436,6 @@ function impressumPage() {
 function datenschutzPage() {
   const b = site.betreiber;
   const mail = `<a href="mailto:${e(b.email)}">${e(b.email)}</a>`;
-  const partnerList = offers.map(o => `<li>${e(o.partner)}${o.adresse ? `, ${e(o.adresse)}` : ''} – für Anfragen zum Angebot „${e(o.rabattTitel)}“</li>`).join('');
   const html = `
 <p>Hier steht, welche Daten wir beim Besuch von firmenbenefits.at, bei Anfragen über unsere Formulare und bei der Kontaktaufnahme mit Betriebsräten verarbeiten. Stand: Oktober 2026.</p>
 <h2>1. Verantwortlicher</h2>
@@ -509,8 +457,7 @@ function datenschutzPage() {
 <p>Unsere Formulare schützen wir mit mosparo, das wir selbst auf unserem Server betreiben (spam.firmenbenefits.at). mosparo prüft die Eingaben und technische Merkmale wie die IP-Adresse auf Spam-Muster, setzt keine Cookies und gibt keine Daten an Dritte weiter. Die Prüfdaten werden automatisch nach kurzer Zeit gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse am Schutz vor Spam und Missbrauch (Art. 6 Abs. 1 lit. f DSGVO).</p>
 <h2>7. Anfragen zu einem Angebot</h2>
 <p>Wenn du über das Formular eines Angebots anfragst, verarbeiten wir Vorname, Nachname, E-Mail, Telefon und Arbeitgeber sowie – wenn du sie angibst – Betriebsrat/Dienststelle, PLZ oder Bezirk und deine Nachricht. Dazu speichern wir, über welches Angebot und welchen Link du gekommen bist (Kürzel des weiterleitenden Betriebsrats und Kampagnenparameter wie utm_source). So sehen wir, über welche Betriebsräte Anfragen entstehen.</p>
-<p><strong>Weitergabe an das Partnerunternehmen:</strong> Mit deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) leiten wir deine Angaben per E-Mail an das Unternehmen weiter, das den Rabatt gewährt, damit es sich bei dir meldet. Ab der Weitergabe verarbeitet das Unternehmen deine Daten in eigener Verantwortung. Aktuell sind das:</p>
-<ul>${partnerList}</ul>
+<p><strong>Weitergabe an das Partnerunternehmen:</strong> Mit deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) leiten wir deine Angaben per E-Mail an das Unternehmen weiter, das den Rabatt gewährt, damit es sich bei dir meldet. Welches Unternehmen das ist, steht namentlich auf der Angebotsseite und im Einwilligungstext direkt über dem Absende-Button. Ab der Weitergabe verarbeitet das Unternehmen deine Daten in eigener Verantwortung.</p>
 <p>Deine Anfrage geben wir weder an deinen Arbeitgeber noch an deinen Betriebsrat weiter. Du bekommst eine Bestätigung per E-Mail. Die Einwilligung kannst du jederzeit an ${mail} widerrufen; die bis dahin erfolgte Weitergabe bleibt rechtmäßig. Die Speicherung der Anfrage bei uns dient der Abwicklung und dem Nachweis gegenüber den Partnerunternehmen (Art. 6 Abs. 1 lit. b und f DSGVO).</p>
 <h2>8. Anmeldung zur monatlichen Angebotsübersicht</h2>
 <p>Wenn ihr euren Betriebsrat oder eure Personalvertretung anmeldet, verarbeiten wir Organisation, Region der Betriebsstätte, ungefähre Zahl der Beschäftigten, Name, Funktion, E-Mail, Telefon und eure Nachricht. Damit schicken wir euch einmal im Monat die aktuellen Angebote zum Weiterleiten. Rechtsgrundlage ist eure Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die ihr zusätzlich über einen Link in einer Bestätigungsmail bestätigt. Ohne diese Bestätigung schicken wir keine Angebotsübersicht. Abbestellen geht jederzeit mit einer kurzen Antwort auf eine unserer Mails oder an ${mail}.</p>
@@ -525,7 +472,7 @@ function datenschutzPage() {
 <li><strong>FunFirst s.r.o. (Emailit)</strong>, Prag, Tschechien – Versand der E-Mails, die die Website verschickt (Weiterleitung an Partner, Bestätigungen).</li>
 <li><strong>Mango Technologies, Inc. (ClickUp)</strong>, 350 Tenth Ave, Suite 500, San Diego, CA 92101, USA – Ablage und Bearbeitung der Anfragen und Kontakte in unserem Aufgaben-Tool. ClickUp verarbeitet die Daten auch in den USA; Grundlage dafür sind die Standardvertragsklauseln der EU-Kommission (Art. 46 Abs. 2 lit. c DSGVO).</li>
 <li><strong>Microsoft Ireland Operations Limited</strong>, Dublin, Irland (Microsoft 365) – E-Mail-Postfächer @firmenbenefits.at. Eine Übermittlung an die Microsoft Corporation in den USA ist nicht ausgeschlossen; Grundlage sind der Angemessenheitsbeschluss zum EU-US Data Privacy Framework, nach dem Microsoft zertifiziert ist, sowie Standardvertragsklauseln. Mails an @convernatics.com laufen über unseren eigenen Mailserver in Österreich.</li>
-<li>Die jeweiligen <strong>Partnerunternehmen</strong> (siehe Punkt 7) als eigenständige Verantwortliche.</li>
+<li>Das jeweilige <strong>Partnerunternehmen</strong>, dessen Angebot du anfragst (siehe Punkt 7), als eigenständiger Verantwortlicher.</li>
 </ul>
 <h2>12. Speicherdauer</h2>
 <ul>
@@ -551,22 +498,22 @@ const thanksPages = [
 <p class="lead">Wir haben deine Anfrage an <strong data-fill="partner">das Partnerunternehmen</strong> weitergeleitet. Du wirst persönlich kontaktiert – per Telefon oder E-Mail.</p>
 <ol class="next-steps"><li><strong>Bestätigung prüfen:</strong> Eine E-Mail mit allen Details ist unterwegs. Nichts bekommen? Schau bitte im Spam-Ordner nach.</li><li><strong>Auf den Rückruf warten:</strong> <span data-fill="partner">Das Partnerunternehmen</span> meldet sich bei dir und kennt deinen firmenbenefits-Rabatt bereits.</li></ol>
 <p class="ref" data-show="id" hidden>Deine Anfrage-Nummer: <strong data-fill="id"></strong></p>
-<div class="hero-actions"><a class="btn primary" href="/angebote/" data-track-link>Weitere Angebote ansehen</a></div>`
+<div class="hero-actions"><a class="btn secondary" href="/" data-track-link>Zur Startseite</a></div>`
   }),
   thanksPage({
     urlPath: '/danke/betriebsrat/', title: 'Fast geschafft', h1: 'Fast geschafft – bitte bestätigt kurz.',
     html: `<p class="eyebrow">Anmeldung erhalten</p>%H1%
 <p class="lead">Wir haben euch eine E-Mail mit einem Bestätigungslink geschickt. Sobald ihr bestätigt, bekommt ihr einmal im Monat die Angebotsübersicht zum Weiterleiten.</p>
-<ol class="next-steps"><li><strong>E-Mail öffnen</strong> und auf „Anmeldung bestätigen“ klicken. Nichts bekommen? Schaut bitte im Spam-Ordner nach.</li><li><strong>Schon jetzt weiterleiten:</strong> Die aktuellen Angebote könnt ihr sofort an eure Kolleg:innen schicken.</li></ol>
+<ol class="next-steps"><li><strong>E-Mail öffnen</strong> und auf „Anmeldung bestätigen“ klicken. Nichts bekommen? Schaut bitte im Spam-Ordner nach.</li><li><strong>Übersicht bekommen:</strong> Danach schicken wir euch die aktuellen Angebote mit euren eigenen Anfrage-Links zum Weiterleiten.</li></ol>
 <p class="ref" data-show="id" hidden>Eure Anmelde-Nummer: <strong data-fill="id"></strong></p>
-<div class="hero-actions"><a class="btn primary" href="/angebote/" data-track-link>Aktuelle Angebote ansehen</a></div>`
+<div class="hero-actions"><a class="btn secondary" href="/" data-track-link>Zur Startseite</a></div>`
   }),
   thanksPage({
     urlPath: '/danke/partner/', title: 'Danke für Ihr Interesse', h1: 'Danke, wir melden uns persönlich.',
     html: `<p class="eyebrow">Anfrage erhalten</p>%H1%
 <p class="lead">Wir sehen uns Ihr Angebot an und melden uns mit den nächsten Schritten. Eine Bestätigung ist per E-Mail unterwegs.</p>
 <p class="ref" data-show="id" hidden>Ihre Anfrage-Nummer: <strong data-fill="id"></strong></p>
-<div class="hero-actions"><a class="btn primary" href="/angebote/" data-track-link>Aktuelle Angebote ansehen</a></div>`
+<div class="hero-actions"><a class="btn secondary" href="/" data-track-link>Zur Startseite</a></div>`
   }),
   thanksPage({
     urlPath: '/bestaetigen/', title: 'Anmeldung bestätigen', h1: 'Anmeldung bestätigen',
@@ -578,12 +525,12 @@ const thanksPages = [
     urlPath: '/danke/bestaetigt/', title: 'Anmeldung bestätigt', h1: 'Danke, eure Anmeldung ist bestätigt.',
     html: `<p class="eyebrow">Bestätigt</p>%H1%
 <p class="lead">Ab jetzt bekommt ihr einmal im Monat die aktuelle Angebotsübersicht – mit einem fertigen Text zum Weiterleiten.</p>
-<div class="hero-actions"><a class="btn primary" href="/angebote/" data-track-link>Aktuelle Angebote ansehen</a></div>`
+<div class="hero-actions"><a class="btn secondary" href="/" data-track-link>Zur Startseite</a></div>`
   })
 ];
 
 function notFoundPage() {
-  return layout({ title: 'Seite nicht gefunden | firmenbenefits.at', description: 'Seite nicht gefunden', urlPath: '/404/', noindex: true, body: `<section class="page-hero thanks"><div class="inner"><div class="thanks-card"><p class="eyebrow">Fehler 404</p><h1>Diese Seite gibt es nicht.</h1><p class="lead">Vielleicht ist das Angebot abgelaufen oder der Link unvollständig.</p><div class="hero-actions"><a class="btn primary" href="/angebote/">Aktuelle Angebote</a><a class="btn secondary" href="/">Zur Startseite</a></div></div></div></section>` });
+  return layout({ title: 'Seite nicht gefunden | firmenbenefits.at', description: 'Seite nicht gefunden', urlPath: '/404/', noindex: true, body: `<section class="page-hero thanks"><div class="inner"><div class="thanks-card"><p class="eyebrow">Fehler 404</p><h1>Diese Seite gibt es nicht.</h1><p class="lead">Vielleicht ist das Angebot abgelaufen oder der Link unvollständig. Euer Betriebsrat schickt jeden Monat die aktuellen Links.</p><div class="hero-actions"><a class="btn primary" href="/">Zur Startseite</a></div></div></div></section>` });
 }
 
 // ---------- Write ----------
@@ -597,9 +544,9 @@ await fs.rm(dist, { recursive: true, force: true });
 await fs.mkdir(dist, { recursive: true });
 await fs.cp(path.join(root, 'public'), dist, { recursive: true });
 
-const pages = [['/', homePage()], ['/angebote/', angebotePage()], ['/partner-werden/', partnerPage()], ['/impressum/', impressumPage()], ['/datenschutz/', datenschutzPage()]];
-for (const o of offers) pages.push([`/angebote/${o.slug}/`, offerPage(o)]);
-for (const [p, html] of pages) await write(p, html);
+const pages = [['/', homePage()], ['/partner-werden/', partnerPage()], ['/impressum/', impressumPage()], ['/datenschutz/', datenschutzPage()]];
+const offerPages = offers.map(o => [`/angebote/${o.slug}/`, offerPage(o)]);
+for (const [p, html] of [...pages, ...offerPages]) await write(p, html);
 for (const html of thanksPages) {
   const p = html.match(/rel="canonical" href="https:\/\/[^/]+([^"]+)"/)[1];
   await write(p, html);
@@ -608,6 +555,4 @@ await write('/404.html', notFoundPage());
 
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map(([p]) => `<url><loc>${BASE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
 await write('/sitemap.xml', sitemap);
-// Public offer metadata for the client (thank-you page) – no recipient addresses.
-await write('/angebote.json', JSON.stringify(Object.fromEntries(offers.map(o => [o.slug, { partner: o.partner, rabatt: o.rabattTitel }]))));
-console.log(`Build ok: ${pages.length + thanksPages.length + 1} Seiten, ${offers.length} Angebote → dist/`);
+console.log(`Build ok: ${pages.length} öffentliche Seiten, ${offerPages.length} Angebotsseiten (nicht gelistet), ${thanksPages.length + 1} Systemseiten → dist/`);

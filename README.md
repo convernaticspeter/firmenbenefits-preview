@@ -9,7 +9,9 @@ Website für firmenbenefits.at: statische Seiten (generiert aus `content/`) plus
 3. `npm test && npm run build` – der Build prüft Pflichtfelder und Regionen.
 4. Committen, pushen, in Coolify deployen.
 
-Daraus entstehen automatisch: Angebotsseite `/angebote/<slug>/` mit Anfrageformular, Karte in `/angebote/` (inkl. Regionsfilter), Teaser auf der Startseite, Eintrag in Sitemap und Datenschutzerklärung (Partnerliste). Abgelaufene Angebote: `"aktiv": false`.
+Daraus entsteht automatisch die Angebotsseite `/angebote/<slug>/` mit eigenem Anfrageformular. Angebote sind **nicht öffentlich auffindbar**: keine Übersicht (`/angebote/` → Startseite), keine Links von öffentlichen Seiten, nicht in der Sitemap, `noindex` (Meta + `X-Robots-Tag`). Erreichbar nur über die individuellen Links in den Betriebsrats-Mails. Abgelaufene Angebote: `"aktiv": false`.
+
+Link-Format je Angebot und Gremium: `https://firmenbenefits.at/angebote/<slug>/?br=<BR-ID>&utm_source=betriebsrat&utm_medium=email&utm_campaign=<yyyy-mm>`. Alte Kurzform `/?angebot=<alias>&br=<BR-ID>` leitet per 302 auf die Angebotsseite weiter (Aliase im Feld `aliase`). Bei Betriebsrat-Anmeldungen über das Formular stehen die fertigen Links des Gremiums im ClickUp-Task und in der Kopie-Mail.
 
 ## Formulare und Datenfluss
 

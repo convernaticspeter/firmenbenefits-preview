@@ -4,6 +4,8 @@ import { validate, requestId, mosparoFieldNames, FORMS } from '../lib/schema.mjs
 import { loadContent } from '../lib/content.mjs';
 import { anfrageMessages, betriebsratMessages, partnerMessages } from '../lib/messages.mjs';
 import { prepare, mosparoJson } from '../lib/mosparo.mjs';
+import { execFileSync } from 'node:child_process';
+import { readFileSync, existsSync } from 'node:fs';
 
 const { site, offers, offersBySlug } = await loadContent();
 const anfrage = { angebot: 'kuechen-schwechat', vorname: 'Maria', nachname: 'Muster', arbeitgeber: 'Muster GmbH', email: 'maria@example.at', telefon: '+43 660 1234567', einwilligung: 'ja', br: 'G042', utm_source: 'betriebsrat' };
@@ -78,8 +80,12 @@ test('mails: Rabatt-Hinweis und Anfrage-ID in allen drei Anfrage-Mails', () => {
 
 test('mails: Betriebsrat-DOI-Link und Partner-Bestätigung', () => {
   const v = validate('betriebsrat', { organisation: 'BR Test', region: 'Wien', beschaeftigte: '51–250', name: 'Max', email: 'br@example.at', monatlich: 'ja' }).values;
-  const m = betriebsratMessages({ id: 'FB-2610-ABCDE', v, site, doiUrl: 'https://x/bestaetigen/?id=1' });
+  const m = betriebsratMessages({ id: 'FB-2610-ABCDE', v, site, doiUrl: 'https://x/bestaetigen/?id=1', offers });
   assert.ok(m.confirmation.text.includes('https://x/bestaetigen/?id=1'));
+  assert.ok(!m.confirmation.text.includes('/angebote/'), 'keine öffentliche Angebotsübersicht verlinken');
+  for (const o of offers) assert.ok(m.task.markdown.includes(`/angebote/${o.slug}/?br=fb-2610-abcde&utm_source=betriebsrat`));
+  const withBr = betriebsratMessages({ id: 'FB-2610-ABCDE', v: { ...v, br: 'g042' }, site, doiUrl: 'x', offers });
+  assert.ok(withBr.copy.text.includes('?br=g042&'));
   const p = partnerMessages({ id: 'FB-2610-ABCDE', v: validate('partner', { firma: 'X', branche: 'Y', standort: 'Wien', rabattidee: '10 %', name: 'A', email: 'a@b.at' }).values, site });
   assert.ok(p.copy.subject.includes('Partner-Anfrage'));
 });
@@ -88,5 +94,24 @@ test('schema: jedes Formular hat Endpoint und versteckte Tracking-Felder', () =>
   for (const [k, f] of Object.entries(FORMS)) {
     assert.ok(f.endpoint.startsWith('/api/'), k);
     assert.ok(f.hidden.includes('br'), k);
+  }
+});
+
+test('build: Angebote sind nicht öffentlich auffindbar', () => {
+  execFileSync(process.execPath, ['build.mjs'], { stdio: 'pipe' });
+  const read = p => readFileSync(new URL('../dist/' + p, import.meta.url), 'utf8');
+  const sitemap = read('sitemap.xml');
+  assert.ok(!sitemap.includes('/angebote/'), 'Sitemap ohne Angebote');
+  assert.ok(!existsSync(new URL('../dist/angebote/index.html', import.meta.url)), 'keine Übersichtsseite');
+  assert.ok(!existsSync(new URL('../dist/angebote.json', import.meta.url)), 'kein Angebots-JSON');
+  for (const page of ['index.html', 'partner-werden/index.html', 'impressum/index.html', 'datenschutz/index.html', '404.html']) {
+    const html = read(page);
+    assert.ok(!html.includes('href="/angebote/'), page + ' verlinkt keine Angebote');
+    for (const o of offers) assert.ok(!html.includes(o.rabattTitel), page + ' nennt kein Angebot: ' + o.rabattTitel);
+  }
+  for (const o of offers) {
+    const html = read(`angebote/${o.slug}/index.html`);
+    assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
+    assert.ok(html.includes('data-form="anfrage"') && html.includes(`value="${o.slug}"`));
   }
 });
