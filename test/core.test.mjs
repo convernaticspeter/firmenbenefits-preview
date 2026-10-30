@@ -4,6 +4,7 @@ import { validate, requestId, mosparoFieldNames, FORMS } from '../lib/schema.mjs
 import { loadContent } from '../lib/content.mjs';
 import { anfrageMessages, betriebsratMessages, partnerMessages } from '../lib/messages.mjs';
 import { prepare, mosparoJson } from '../lib/mosparo.mjs';
+import { personalize, cleanFirma } from '../lib/firma.mjs';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
@@ -129,4 +130,20 @@ test('Angebot ohne Auswertung (Michelle): keine Herkunftsdaten, kein br-Feld', (
   assert.ok(html.includes('Wir speichern keine Kopie'));
   const k = readFileSync(new URL('../dist/angebote/kuechen-schwechat/index.html', import.meta.url), 'utf8');
   assert.ok(k.includes('name="br"'));
+});
+
+test('Angebotsseite: Firmenname aus ?firma= statt Bezirken', () => {
+  for (const o of offers) {
+    const html = readFileSync(new URL(`../dist/angebote/${o.slug}/index.html`, import.meta.url), 'utf8');
+    const main = html.slice(html.indexOf('<main'), html.indexOf('</main>')).replace(/<form[\s\S]*?<\/form>/g, '');
+    for (const word of ['Bezirk', 'Bruck an der Leitha', 'Baden', 'Mödling', 'Gänserndorf', 'NÖ']) assert.ok(!main.includes(word), `${o.slug}: ${word}`);
+    const head = html.slice(0, html.indexOf('</head>'));
+    assert.ok(!head.includes('Bezirk'), `${o.slug}: Bezirk in Meta`);
+    const p = personalize(html, '  Wiener   Linien ');
+    assert.ok(p.includes('Für die Belegschaft von Wiener Linien</span>'));
+    assert.ok(p.includes('>die Belegschaft von Wiener Linien</dd>'));
+    assert.equal(personalize(html, ''), html);
+    assert.ok(personalize(html, '<script>alert(1)</script>&"').includes('scriptalert(1)/script&amp;&quot;'));
+  }
+  assert.equal(cleanFirma('x'.repeat(200)).length, 80);
 });

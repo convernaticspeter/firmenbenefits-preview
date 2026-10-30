@@ -302,7 +302,7 @@ function offerPage(o) {
 <section class="page-hero offer-hero">
 <div class="inner offer-hero-grid">
 <div>
-<p class="eyebrow">${e(o.kategorie)} · ${e(o.regionen.length === 1 ? 'nur ' + regionLabel(o.regionen[0]) : 'Wien und NÖ-Bezirke')}</p>
+<p class="eyebrow">${e(o.kategorie)} · <span data-firma-vorlage="Für die Belegschaft von %s">Für Beschäftigte teilnehmender Betriebe</span></p>
 <h1>${e(o.rabattTitel)}</h1>
 <p class="lead">${e(o.lead)}</p>
 <div class="hero-actions"><a class="btn primary" href="#anfrage">Jetzt anfragen →</a></div>
@@ -311,7 +311,7 @@ function offerPage(o) {
 <p class="facts-title">Dein firmenbenefits-Rabatt</p>
 <ul class="facts-rabatte">${o.rabatte.map(r => `<li>${icon('check')}<span>${e(r)}</span></li>`).join('')}</ul>
 <dl>
-<div><dt>${icon('pin')}Region</dt><dd>${e(o.regionText.charAt(0).toUpperCase() + o.regionText.slice(1))}</dd></div>
+<div><dt>${icon('tag')}Gilt für</dt><dd data-firma-vorlage="die Belegschaft von %s">Beschäftigte teilnehmender Betriebe</dd></div>
 <div><dt>${icon('clock')}Gültig</dt><dd>im Pilot bis ${e(until)}</dd></div>
 <div><dt>${icon('form')}So bekommst du ihn</dt><dd>Anfrage über das Formular – ohne Ausweis, ohne Code</dd></div>
 </dl>

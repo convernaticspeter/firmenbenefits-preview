@@ -11,6 +11,7 @@ import { validate, mosparoFieldNames, requestId } from './lib/schema.mjs';
 import { verifyMosparo } from './lib/mosparo.mjs';
 import * as clickup from './lib/clickup.mjs';
 import { anfrageMessages, betriebsratMessages, partnerMessages } from './lib/messages.mjs';
+import { personalize } from './lib/firma.mjs';
 
 const env = process.env;
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -267,6 +268,8 @@ const server = http.createServer(async (req, res) => {
     const ext = path.extname(file);
     if (ext === '.html') {
       let html = data.toString().replaceAll('__ROBOTS__', canonical ? 'index, follow' : 'noindex, nofollow');
+      // Offer links carry the company name (?firma=…) – shown instead of the region, never stored.
+      if (url.pathname.startsWith('/angebote/') && url.searchParams.has('firma')) html = personalize(html, url.searchParams.get('firma'));
       if (!canonical) html = html.replace(/<script defer data-domain="[^"]*" src="https:\/\/plausible\.convernatics\.com\/js\/script\.js"><\/script>\n?/g, '');
       data = Buffer.from(html);
     }
