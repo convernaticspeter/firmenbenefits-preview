@@ -22,23 +22,31 @@ const previewHosts = (env.PREVIEW_HOSTS || '').split(',').map(s => s.trim().toLo
 const validHosts = new Set([CANON, 'www.' + CANON, ...previewHosts, 'localhost', '127.0.0.1']);
 const port = Number(env.PORT || 3000);
 const QA = (env.FORM_QA_RECIPIENT || '').trim();
+// QA redirect applies only to preview hosts – on the canonical host mails always go to the real recipients.
+const qaFor = publicHost => (QA && publicHost !== CANON ? QA : '');
 
 const transport = nodemailer.createTransport({
   host: env.EMAILIT_SMTP_HOST, port: Number(env.EMAILIT_SMTP_PORT || 587), secure: env.EMAILIT_SMTP_PORT === '465',
-  auth: { user: env.EMAILIT_SMTP_USER, pass: env.EMAILIT_SMTP_PASSWORD }, connectionTimeout: 15000, socketTimeout: 20000
+  auth: { user: env.EMAILIT_SMTP_USER, pass: env.EMAILIT_SMTP_PASSWORD }, connectionTimeout: 15000, socketTimeout: 20000,
+  pool: true, maxConnections: 1, maxMessages: 50
 });
-const mailConfigured = () => Boolean(env.EMAILIT_SMTP_HOST && env.EMAILIT_SMTP_USER && env.EMAILIT_SMTP_PASSWORD && env.EMAILIT_SMTP_FROM && (QA || env.FB_COPY_TO));
+const mailConfigured = () => Boolean(env.EMAILIT_SMTP_HOST && env.EMAILIT_SMTP_USER && env.EMAILIT_SMTP_PASSWORD && env.EMAILIT_SMTP_FROM && env.FB_COPY_TO);
 const from = () => ({ name: env.MAIL_FROM_NAME || 'firmenbenefits.at', address: env.EMAILIT_SMTP_FROM });
-const copyTo = () => QA || env.FB_COPY_TO;
+const copyTo = qa => qa || env.FB_COPY_TO;
 const replyTo = () => env.FB_REPLY_TO || env.FB_COPY_TO || site.betreiber.email;
 
-async function send({ to, subject, text, replyTo: rt }) {
+async function send({ to, subject, text, replyTo: rt, qa = '' }) {
   if (!to || (Array.isArray(to) && !to.length)) return { ok: false, error: 'no_recipient' };
-  try {
-    const result = await transport.sendMail({ from: from(), to, subject: (QA ? 'TEST – ' : '') + subject, text, replyTo: rt || replyTo() });
-    return { ok: Boolean(result.accepted?.length), messageId: result.messageId };
-  } catch (error) {
-    return { ok: false, error: error.code || 'SMTP_ERROR' };
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const result = await transport.sendMail({ from: from(), to, subject: (qa ? 'TEST – ' : '') + subject, text, replyTo: rt || replyTo() });
+      return { ok: Boolean(result.accepted?.length), messageId: result.messageId };
+    } catch (error) {
+      const err = { ok: false, error: error.code || 'SMTP_ERROR', status: error.responseCode || null };
+      console.error(JSON.stringify({ event: 'smtp_failed', attempt, code: err.error, status: err.status, response: String(error.response || '').slice(0, 160) }));
+      if (attempt === 2 || (err.status && err.status >= 500)) return err;
+      await new Promise(r => setTimeout(r, 1500));
+    }
   }
 }
 
@@ -48,26 +56,29 @@ async function store(task) {
 }
 
 const doiSig = (id, tid) => createHmac('sha256', env.FB_DOI_SECRET || '').update(`doi|${id}|${tid}`).digest('hex').slice(0, 32);
-function log(event, id, data) { console.info(JSON.stringify({ event, id, qa: Boolean(QA), ...data })); }
+function log(event, id, data) { console.info(JSON.stringify({ event, id, ...data })); }
 
 // ---------- Handlers ----------
-async function handleAnfrage(v) {
+async function handleAnfrage(v, ctx) {
+  const qa = qaFor(ctx.publicHost);
   const offer = offersBySlug[v.angebot];
   const id = requestId();
   const now = new Date();
   const first = anfrageMessages({ id, v, offer, site, now });
   const stored = await store(first.task);
-  const recipients = QA ? [QA] : offer.empfaenger;
-  const partnerResult = await send({ to: recipients, ...first.partner });
-  const partnerStatus = partnerResult.ok ? `zugestellt an ${recipients.join(', ')}${QA ? ' (QA-Umleitung)' : ''}` : `FEHLGESCHLAGEN (${partnerResult.error}) – bitte manuell an ${offer.empfaenger.join(', ')} weiterleiten`;
+  const recipients = qa ? [qa] : offer.empfaenger;
+  const partnerResult = await send({ to: recipients, qa, ...first.partner });
+  const partnerStatus = partnerResult.ok ? `zugestellt an ${recipients.join(', ')}${qa ? ' (QA-Umleitung)' : ''}` : `FEHLGESCHLAGEN (${partnerResult.error}) – bitte manuell an ${offer.empfaenger.join(', ')} weiterleiten`;
   const msgs = anfrageMessages({ id, v, offer, site, now, clickupUrl: stored?.url || '', partnerStatus });
-  const [copyResult, confResult] = await Promise.all([send({ to: copyTo(), ...msgs.copy }), send({ to: v.email, ...msgs.confirmation })]);
-  log('anfrage', id, { angebot: offer.slug, br: Boolean(v.br), stored: Boolean(stored), partner: partnerResult.ok, copy: copyResult.ok, confirmation: confResult.ok });
+  const confResult = await send({ to: v.email, qa, ...msgs.confirmation });
+  const copyResult = await send({ to: copyTo(qa), qa, ...msgs.copy });
+  log('anfrage', id, { qa: Boolean(qa), angebot: offer.slug, br: Boolean(v.br), stored: Boolean(stored), partner: partnerResult.ok, copy: copyResult.ok, confirmation: confResult.ok });
   if (!partnerResult.ok && !copyResult.ok) return { status: 502, body: { error: 'Deine Anfrage konnte gerade nicht übermittelt werden. Bitte versuch es noch einmal.' } };
   return { status: 200, body: { ok: true, id } };
 }
 
 async function handleBetriebsrat(v, ctx) {
+  const qa = qaFor(ctx.publicHost);
   const id = requestId();
   const now = new Date();
   const offers = Object.values(offersBySlug);
@@ -76,25 +87,28 @@ async function handleBetriebsrat(v, ctx) {
   const tid = stored?.id || '';
   const doiUrl = `https://${ctx.publicHost}/bestaetigen/?id=${encodeURIComponent(id)}&tid=${encodeURIComponent(tid)}&sig=${doiSig(id, tid)}`;
   const msgs = betriebsratMessages({ id, v, site, now, doiUrl, clickupUrl: stored?.url || '', offers });
-  const [confResult, copyResult] = await Promise.all([send({ to: v.email, ...msgs.confirmation }), send({ to: copyTo(), ...msgs.copy })]);
-  log('betriebsrat', id, { br: Boolean(v.br), stored: Boolean(stored), confirmation: confResult.ok, copy: copyResult.ok });
+  const confResult = await send({ to: v.email, qa, ...msgs.confirmation });
+  const copyResult = await send({ to: copyTo(qa), qa, ...msgs.copy });
+  log('betriebsrat', id, { qa: Boolean(qa), br: Boolean(v.br), stored: Boolean(stored), confirmation: confResult.ok, copy: copyResult.ok });
   if (!confResult.ok && !copyResult.ok) return { status: 502, body: { error: 'Die Anmeldung konnte gerade nicht übermittelt werden. Bitte versucht es noch einmal.' } };
   return { status: 200, body: { ok: true, id } };
 }
 
-async function handlePartner(v) {
+async function handlePartner(v, ctx) {
+  const qa = qaFor(ctx.publicHost);
   const id = requestId();
   const now = new Date();
   const first = partnerMessages({ id, v, site, now });
   const stored = await store(first.task);
   const msgs = partnerMessages({ id, v, site, now, clickupUrl: stored?.url || '' });
-  const [copyResult, confResult] = await Promise.all([send({ to: copyTo(), ...msgs.copy }), send({ to: v.email, ...msgs.confirmation })]);
-  log('partner', id, { stored: Boolean(stored), copy: copyResult.ok, confirmation: confResult.ok });
+  const confResult = await send({ to: v.email, qa, ...msgs.confirmation });
+  const copyResult = await send({ to: copyTo(qa), qa, ...msgs.copy });
+  log('partner', id, { qa: Boolean(qa), stored: Boolean(stored), copy: copyResult.ok, confirmation: confResult.ok });
   if (!stored && !copyResult.ok) return { status: 502, body: { error: 'Ihre Anfrage konnte gerade nicht übermittelt werden. Bitte versuchen Sie es noch einmal.' } };
   return { status: 200, body: { ok: true, id } };
 }
 
-async function handleBestaetigen(fields) {
+async function handleBestaetigen(fields, ctx) {
   const id = String(fields.id || ''); const tid = String(fields.tid || ''); const sig = String(fields.sig || '');
   const invalid = { status: 400, body: { error: 'Der Bestätigungslink ist ungültig.' } };
   if (!/^FB-\d{4}-[A-Z0-9]{5}$/.test(id) || !/^[a-z0-9]{0,20}$/.test(tid) || !/^[a-f0-9]{32}$/.test(sig) || !env.FB_DOI_SECRET) return invalid;
@@ -109,7 +123,7 @@ async function handleBestaetigen(fields) {
     } catch (error) { console.error(JSON.stringify({ event: 'doi_clickup_failed', status: error.status || null })); }
   }
   if (!done) {
-    const r = await send({ to: copyTo(), subject: `[firmenbenefits] Double-Opt-in bestätigt (${id})`, text: `Die Anmeldung ${id} wurde am ${when} über den Bestätigungslink bestätigt.\nClickUp-Task: ${tid || 'nicht vorhanden'} – bitte manuell vermerken.` });
+    const r = await send({ to: copyTo(qaFor(ctx.publicHost)), qa: qaFor(ctx.publicHost), subject: `[firmenbenefits] Double-Opt-in bestätigt (${id})`, text: `Die Anmeldung ${id} wurde am ${when} über den Bestätigungslink bestätigt.\nClickUp-Task: ${tid || 'nicht vorhanden'} – bitte manuell vermerken.` });
     if (!r.ok) return { status: 502, body: { error: 'Die Bestätigung konnte gerade nicht gespeichert werden.' } };
   }
   log('doi', id, { clickup: done });
@@ -150,7 +164,7 @@ async function readBody(req) {
 }
 
 async function api(req, res, url, host, json) {
-  if (url.pathname === '/api/health') return json(200, { ok: true, mail: mailConfigured(), clickup: clickup.clickupConfigured(), mosparo: Boolean(env.MOSPARO_HOST && env.MOSPARO_PRIVATE_KEY), doi: Boolean(env.FB_DOI_SECRET), qa: Boolean(QA) });
+  if (url.pathname === '/api/health') return json(200, { ok: true, mail: mailConfigured(), clickup: clickup.clickupConfigured(), mosparo: Boolean(env.MOSPARO_HOST && env.MOSPARO_PRIVATE_KEY), doi: Boolean(env.FB_DOI_SECRET), qaPreview: Boolean(QA) });
   if (url.pathname === '/api/mosparo-config') return json(200, { host: env.MOSPARO_HOST || '', uuid: env.MOSPARO_UUID || '', publicKey: env.MOSPARO_PUBLIC_KEY || '' });
   const kind = { '/api/anfrage': 'anfrage', '/api/betriebsrat': 'betriebsrat', '/api/partner': 'partner', '/api/bestaetigen': 'bestaetigen' }[url.pathname];
   if (!kind) return json(404, { error: 'Nicht gefunden.' });
@@ -161,7 +175,8 @@ async function api(req, res, url, host, json) {
   try { fields = await readBody(req); } catch (error) { return json(error.status || 400, { error: error.status === 413 ? 'Die Eingabe ist zu lang.' : 'Ungültiges Formular.' }); }
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',').at(-1).trim();
   if (rateLimited(ip, kind)) return json(429, { error: 'Zu viele Versuche. Bitte versuch es später noch einmal.' });
-  if (kind === 'bestaetigen') { const r = await handleBestaetigen(fields); return json(r.status, r.body); }
+  const publicHost = validHosts.has(host) && host !== 'www.' + CANON && host !== 'localhost' && host !== '127.0.0.1' ? host : CANON;
+  if (kind === 'bestaetigen') { const r = await handleBestaetigen(fields, { publicHost }); return json(r.status, r.body); }
 
   const check = validate(kind, fields, { offers: offersBySlug });
   if (!check.ok) return json(422, { error: 'Bitte prüfe die markierten Felder.', errors: check.errors });
@@ -175,7 +190,6 @@ async function api(req, res, url, host, json) {
   } catch { console.error(JSON.stringify({ event: 'mosparo_unavailable', kind })); return json(503, { error: 'Die Spamprüfung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal.' }); }
   if (!mailConfigured()) return json(503, { error: 'Der Versand ist gerade nicht verfügbar.' });
 
-  const publicHost = validHosts.has(host) && host !== 'www.' + CANON && host !== 'localhost' && host !== '127.0.0.1' ? host : CANON;
   const handler = { anfrage: handleAnfrage, betriebsrat: handleBetriebsrat, partner: handlePartner }[kind];
   const r = await handler(check.values, { publicHost });
   return json(r.status, r.body);
@@ -245,5 +259,5 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, () => console.info(JSON.stringify({ event: 'listening', port, qa: Boolean(QA), mail: mailConfigured(), clickup: clickup.clickupConfigured() })));
+server.listen(port, () => console.info(JSON.stringify({ event: 'listening', port, qaPreview: Boolean(QA), mail: mailConfigured(), clickup: clickup.clickupConfigured() })));
 export { server };

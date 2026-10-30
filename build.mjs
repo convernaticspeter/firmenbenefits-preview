@@ -22,6 +22,8 @@ const pilotRegionen = site.pilot.regionen;
 const listJoin = arr => arr.length < 2 ? arr.join('') : arr.slice(0, -1).join(', ') + ' und ' + arr.at(-1);
 const noeBezirke = listJoin(pilotRegionen.filter(r => r !== 'wien').map(regionLabel));
 
+const BRAND = '<span class="brand-mark" aria-hidden="true"><span>%</span></span><span class="brand-text"><span class="brand-word">firmen<b>benefits</b><i>.at</i></span><small>Rabatte für Belegschaften</small></span>';
+
 const ICONS = {
   training: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>',
   kueche: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 7h.01M12 7h.01M9 14h6"/></svg>',
@@ -73,7 +75,7 @@ function layout({ title, description, urlPath, body, noindex = false, active = '
 <a class="skip-link" href="#inhalt">Zum Inhalt</a>
 <header class="site-header">
 <nav aria-label="Hauptnavigation" class="nav">
-<a aria-label="firmenbenefits.at – Startseite" class="brand" href="/"><span class="brand-mark">fb</span><span>firmenbenefits.at <small>Rabatte für Belegschaften</small></span></a>
+<a aria-label="firmenbenefits.at – Startseite" class="brand" href="/">${BRAND}</a>
 <div class="nav-links">${navLinks}</div>
 <a class="nav-cta" href="/#mitmachen">Angebotsübersicht anfordern</a>
 <details class="mobile-menu">
@@ -88,7 +90,7 @@ ${body}
 <footer class="site-footer">
 <div class="inner footer-grid">
 <div>
-<strong>firmenbenefits.at</strong>
+<span class="brand brand-footer">${BRAND}</span>
 <p class="footer-note">Regionale Betriebe geben ihr Werbebudget als Rabatt an Belegschaften weiter. Für Betriebsräte und Personalvertretungen kostenlos.</p>
 </div>
 <nav aria-label="Footer-Navigation" class="footer-links"><a href="/#mitmachen">Für Betriebsräte</a><a href="/partner-werden/">Partner werden</a><a href="/#fragen">Fragen</a></nav>
@@ -165,11 +167,12 @@ function faq(items, openFirst = true) {
 
 // ---------- Pages ----------
 function homePage() {
-  const heroRows = [
-    ['tag', 'Rabatte aus eurer Region', 'neu jeden Monat'],
-    ['form', 'Fertiger Text zum Weiterleiten', 'Mail · Intranet · Aushang'],
-    ['pin', 'Eigener Anfrage-Link je Angebot', 'ohne Ausweis, ohne Code']
-  ].map(([ic, title, sub]) => `<div class="offer-row"><span class="icon">${icon(ic)}</span><span><strong>${title}</strong><small>${sub}</small></span></div>`).join('');
+  const monat = new Intl.DateTimeFormat('de-AT', { month: 'long', timeZone: 'Europe/Vienna' }).format(new Date());
+  const mailRows = [
+    ['training', 'Gesundheit & Fitness', 'Link für eure Belegschaft', '%'],
+    ['kueche', 'Wohnen & Küche', 'Link für eure Belegschaft', '%'],
+    ['tag', 'Neue Partner', 'kommen laufend dazu', 'neu']
+  ].map(([ic, title, sub, tag], i) => `<li class="mail-offer${i === 2 ? ' is-soon' : ''}"><span class="icon">${icon(ic)}</span><span><strong>${title}</strong><small>${sub}</small></span><span class="mail-tag">${tag}</span></li>`).join('');
   const brForm = renderForm('betriebsrat', {
     submit: 'Angebotsübersicht anfordern',
     checkboxLabel: 'Ja, schickt uns einmal im Monat die Angebotsübersicht per E-Mail. Wir können das jederzeit abbestellen – eine kurze Mail genügt.',
@@ -188,12 +191,14 @@ function homePage() {
 </div>
 <p class="hero-note">Für Betriebsräte und Personalvertretungen. Einmal im Monat kommt die Übersicht – fertig zum Weiterleiten.</p>
 </div>
-<aside aria-label="Was in eurer Monatsübersicht steht" class="benefit-card">
-<div class="mock-window">
-<p class="mock-title">Eure Monatsübersicht</p>
-${heroRows}
+<aside aria-label="So sieht eure Monatsübersicht aus" class="mail-mock">
+<div class="mail-sheet">
+<div class="mail-head"><span class="mail-from"><span class="brand-mark" aria-hidden="true"><span>%</span></span><span><strong>firmenbenefits.at</strong><small>an euren Betriebsrat</small></span></span><span class="mail-date">1 × im Monat</span></div>
+<p class="mail-subject">Eure Angebote für ${monat}</p>
+<ul class="mail-offers">${mailRows}</ul>
+<div class="mail-forward"><span>Fertiger Text zum Weiterleiten</span><span class="mail-btn">Weiterleiten →</span></div>
 </div>
-<p class="card-caption">Die Angebote gibt es nur über eure Übersicht – nicht öffentlich im Netz.</p>
+<p class="mail-caption">Nur über eure Übersicht – nicht öffentlich im Netz.</p>
 </aside>
 </div>
 </section>
@@ -210,7 +215,7 @@ ${heroRows}
 ${stepList([
     ['Ihr meldet euch an', 'Über das Formular unten oder mit einem kurzen „Ja“ auf unsere Mail. Wir nehmen euren Betriebsrat in den Verteiler auf.'],
     ['Ihr leitet die Übersicht weiter', 'Einmal im Monat bekommt ihr die aktuellen Angebote – mit einem fertigen Text für Mail, Intranet oder Aushang.'],
-    ['Eure Kolleg:innen fragen an', 'Über den Link beim jeweiligen Angebot – jedes Angebot hat sein eigenes kurzes Anfrageformular. Der Betrieb meldet sich persönlich und gibt den Rabatt. Ohne Ausweis, ohne Code.']
+    ['Eure Kolleg:innen fragen an', 'Über den eigenen Link beim Angebot. Der Betrieb meldet sich persönlich und gibt den Rabatt – ohne Ausweis, ohne Code.']
   ])}
 </section>
 
