@@ -35,16 +35,21 @@ const from = () => ({ name: env.MAIL_FROM_NAME || 'firmenbenefits.at', address: 
 const copyTo = qa => qa || env.FB_COPY_TO;
 const replyTo = () => env.FB_REPLY_TO || env.FB_COPY_TO || site.betreiber.email;
 
+// Emailit allows max. 2 messages per second – keep sends spaced out (single pooled connection).
+let nextSendAt = 0;
 async function send({ to, subject, text, replyTo: rt, qa = '' }) {
   if (!to || (Array.isArray(to) && !to.length)) return { ok: false, error: 'no_recipient' };
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const wait = nextSendAt - Date.now();
+    nextSendAt = Math.max(Date.now(), nextSendAt) + 700;
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
     try {
       const result = await transport.sendMail({ from: from(), to, subject: (qa ? 'TEST – ' : '') + subject, text, replyTo: rt || replyTo() });
       return { ok: Boolean(result.accepted?.length), messageId: result.messageId };
     } catch (error) {
       const err = { ok: false, error: error.code || 'SMTP_ERROR', status: error.responseCode || null };
       console.error(JSON.stringify({ event: 'smtp_failed', attempt, code: err.error, status: err.status, response: String(error.response || '').slice(0, 160) }));
-      if (attempt === 2 || (err.status && err.status >= 500)) return err;
+      if (attempt === 3 || (err.status && err.status >= 500)) return err;
       await new Promise(r => setTimeout(r, 1500));
     }
   }

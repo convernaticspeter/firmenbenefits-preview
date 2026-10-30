@@ -427,7 +427,7 @@ function impressumPage() {
 <p>${e(b.firma)}<br>Inhaber: ${e(b.inhaber)}<br>${e(b.strasse)}<br>${e(b.ort)}<br>${e(b.land)}</p>
 <p>E-Mail: <a href="mailto:${e(b.email)}">${e(b.email)}</a><br>Telefon: <a href="tel:${e(b.telefonHref)}">${e(b.telefon)}</a></p>
 <h2>Unternehmensangaben</h2>
-<p>Rechtsform: Einzelunternehmen<br>Unternehmensgegenstand: Online-Marketing und Digitalberatung; Betrieb der Plattform firmenbenefits.at<br>UID-Nummer: ${e(b.uid)}<br>Mitglied der Wirtschaftskammer Wien<br>Gewerbebehörde: Magistratisches Bezirksamt für den 8. Bezirk<br>Anwendbare Rechtsvorschriften: Gewerbeordnung 1994, abrufbar unter <a href="https://www.ris.bka.gv.at" rel="noopener">www.ris.bka.gv.at</a></p>
+<p>Rechtsform: Einzelunternehmen<br>Unternehmensgegenstand: Werbeagentur sowie Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik; Betrieb der Plattform firmenbenefits.at<br>Gewerbeberechtigungen: Werbeagentur (GISA-Zahl 29499335); Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik (GISA-Zahl 27745687)<br>UID-Nummer: ${e(b.uid)}<br>Mitglied der Wirtschaftskammer Wien<br>Gewerbebehörde: Magistratisches Bezirksamt für den 1./8. Bezirk<br>Anwendbare Rechtsvorschriften: Gewerbeordnung 1994, abrufbar unter <a href="https://www.ris.bka.gv.at" rel="noopener">www.ris.bka.gv.at</a></p>
 <h2>Offenlegung nach § 25 Mediengesetz</h2>
 <p>Medieninhaber: ${e(b.firma)}, Inhaber ${e(b.inhaber)}, ${e(b.strasse)}, ${e(b.ort)}.</p>
 <p>Grundlegende Richtung: Information über Rabattangebote regionaler Unternehmen für Beschäftigte sowie über die Zusammenarbeit mit Betriebsräten, Personalvertretungen und Partnerunternehmen.</p>
