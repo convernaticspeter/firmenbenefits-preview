@@ -182,7 +182,7 @@ function homePage() {
 <section class="hero">
 <div class="hero-grid">
 <div>
-<p class="eyebrow">Pilot in Wien und Umgebung · bis ${PILOT}</p>
+<p class="eyebrow">Pilot ab November · Wien und Umgebung · bis ${PILOT}</p>
 <h1>Rabatte für eure Belegschaft. Für euch kostenlos.</h1>
 <p class="lead">Regionale Betriebe geben ihr Werbebudget nicht Google oder Meta, sondern euren Kolleg:innen – als Rabatt. Ihr leitet die Angebote weiter, eure Leute fragen direkt bei uns an. Kein Portal, kein Login, kein Aufwand.</p>
 <div class="hero-actions">
@@ -237,7 +237,7 @@ ${stepList([
 <div>
 <p class="kicker">Pilot</p>
 <h2>Wir starten in Wien und Umgebung</h2>
-<p>Der Pilot läuft bis ${PILOT} in Wien und den niederösterreichischen Bezirken ${noeBezirke}. Danach kommen laufend weitere Angebote und Regionen dazu.</p>
+<p>Der Pilot läuft von November bis ${PILOT} in Wien und den niederösterreichischen Bezirken ${noeBezirke}. Danach kommen laufend weitere Angebote und Regionen dazu.</p>
 <p>Euer Betrieb liegt woanders? Meldet euch trotzdem – so wissen wir, wo wir als Nächstes Partner suchen.</p>
 </div>
 ${regionChips(pilotRegionen, 'chips big')}
@@ -279,7 +279,7 @@ ${brForm}
 </section>`;
   return layout({
     title: 'firmenbenefits.at – Rabatte für eure Belegschaft, kostenlos für Betriebsräte',
-    description: `Regionale Betriebe geben ihr Werbebudget als Rabatt an Belegschaften weiter. Für Betriebsräte und Personalvertretungen kostenlos. Pilot in Wien und Umgebung bis ${PILOT}.`,
+    description: `Regionale Betriebe geben ihr Werbebudget als Rabatt an Belegschaften weiter. Für Betriebsräte und Personalvertretungen kostenlos. Pilot in Wien und Umgebung von November bis ${PILOT}.`,
     urlPath: '/',
     body
   });
@@ -391,7 +391,7 @@ ${stepList([
 <div class="pilot-card">
 <div>
 <p class="kicker">Pilot</p>
-<h2>Gerade läuft unser Pilot in Wien und Umgebung</h2>
+<h2>Ab November läuft unser Pilot in Wien und Umgebung</h2>
 <p>Bis ${PILOT} sind ${listJoin(offers.map(o => `${o.partner} (${o.kategorie})`))} mit dabei. Danach bauen wir weitere Regionen auf.</p>
 </div>
 ${regionChips(pilotRegionen, 'chips big')}
