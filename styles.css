@@ -1,3 +1,7 @@
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500 800; font-display: swap; src: url(/fonts/archivo-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 500 800; font-display: swap; src: url(/fonts/archivo-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 500 650; font-display: swap; src: url(/fonts/sourceserif4-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 500 650; font-display: swap; src: url(/fonts/sourceserif4-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
     :root {
       --ink: #11131a;
       --muted: #5d6472;
@@ -216,3 +220,21 @@
     .form-status.success { background: rgba(29,139,95,.12); color: var(--green); }
     .form-status.error { background: rgba(231,51,42,.10); color: var(--red-dark); }
 
+    /* Pilot-Angebote, Formular-Checkbox, Rechtstexte */
+    .offer-sub { display:block; margin-top:4px; font-size:14px; font-weight:700; color: var(--muted); letter-spacing:0; }
+    .offer-cards .card { display:flex; flex-direction:column; align-items:flex-start; }
+    .offer-cards .card .btn { margin-top: auto; }
+    .offer-cards .card p:last-of-type { margin-bottom: var(--card-gap); }
+    .offer-region { margin:0 0 14px !important; color: var(--red-dark) !important; font-weight:800; font-size:14px; letter-spacing:.02em; }
+    .offer-price { margin: 16px 0 0 !important; color: var(--ink) !important; font: 800 clamp(34px, 3.4vw, 46px)/1 Archivo, sans-serif; letter-spacing:-.04em; }
+    .offer-price span { display:block; margin-top:8px; font-size:17px; font-weight:700; letter-spacing:0; color: var(--muted); line-height:1.35; }
+    label.check { display:flex; gap:12px; align-items:flex-start; font-size:16px; font-weight:700; color:#343945; cursor:pointer; }
+    label.check input { width:22px; height:22px; flex:0 0 22px; margin:2px 0 0; padding:0; accent-color: var(--red); }
+    label.check span { color:#343945; font-weight:700; }
+    .legal ul { padding-left: 1.2em; display:grid; gap:8px; }
+    .legal code { font-size:.92em; background: var(--soft); padding:2px 6px; border-radius:6px; }
+    #angebote { padding-bottom: clamp(28px, 4vw, 48px); }
+    #anfrage { padding-top: clamp(28px, 4vw, 48px); }
+    .contact .tick-list { margin-top: 26px; }
+    .lead-form label.check + .btn { margin-top: 6px; }
+    @media (max-width: 920px) { .form-grid { grid-template-columns: 1fr; } }

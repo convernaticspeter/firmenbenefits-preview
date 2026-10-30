@@ -19,13 +19,13 @@ http.createServer(async(req,res)=>{
  if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end();}
  let p;try{p=decodeURIComponent(u.pathname);}catch{res.writeHead(400);return res.end();}
  const file = path.resolve(root,'.'+(p==='/'?'/index.html':p));
- if(!file.startsWith(root+'/')||(!files.includes(path.relative(root,file))&&!['styles.css','consent.js','consent.css'].includes(path.relative(root,file)))){res.writeHead(404);return res.end('Seite nicht gefunden');}
+ if(!file.startsWith(root+'/')||(!files.includes(path.relative(root,file))&&!['styles.css','consent.js','consent.css'].includes(path.relative(root,file))&&!/^fonts\/[a-z0-9-]+\.woff2$/.test(path.relative(root,file)))){res.writeHead(404);return res.end('Seite nicht gefunden');}
  try{
  let data = await fs.readFile(file); const ext=path.extname(file);
  if(ext==='.html'){
   const canonical='https://firmenbenefits.at'+(p==='/index.html'?'/':p);
-  data=Buffer.from(data.toString().replace('noindex, nofollow',prod?'index, follow':'noindex, nofollow').replace('</head>',`<link rel="canonical" href="${canonical}"><link rel="stylesheet" href="/consent.css"><script>window.ConvernaticsConsentConfig={version:'firmenbenefits-v1',language:'de',services:[{key:'convernatics-consent',name:'Convernatics Consent',group:'necessary',provider:'Convernatics',description:'Speichert Ihre Datenschutzeinstellungen',privacy:'/datenschutz.html',cookies:[{name:'convernatics_consent',lifetime:'180 Tage'}]}]};</script><script defer src="/consent.js"></script>${prod?'<script defer data-domain="firmenbenefits.at" src="https://plausible.convernatics.com/js/script.js"></script>':''}</head>`).replace('</body>','<footer style="text-align:center;padding:1rem"><button type="button" data-cc-open>Cookie-Einstellungen</button></footer></body>'));
+  data=Buffer.from(data.toString().replace('noindex, nofollow',prod?'index, follow':'noindex, nofollow').replace('</head>',`<link rel="canonical" href="${canonical}"><link rel="stylesheet" href="/consent.css"><script>window.ConvernaticsConsentConfig={version:'firmenbenefits-v1',language:'de',services:[{key:'convernatics-consent',name:'Convernatics Consent',group:'necessary',provider:'Convernatics',description:'Speichert Ihre Datenschutzeinstellungen',privacy:'/datenschutz.html',cookies:[{name:'convernatics_consent',lifetime:'180 Tage'}]}]};</script><script defer src="/consent.js"></script>${prod?'<script defer data-domain="firmenbenefits.at" src="https://plausible.convernatics.com/js/script.js"></script>':''}</head>`));
  }
- res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.css':'text/css','.js':'application/javascript'})[ext]||'application/octet-stream','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
+ res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.css':'text/css','.js':'application/javascript','.woff2':'font/woff2'})[ext]||'application/octet-stream','Cache-Control':ext==='.woff2'?'public, max-age=31536000, immutable':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
  }catch{res.writeHead(404);res.end('Seite nicht gefunden');}
 }).listen(3000,'0.0.0.0');
