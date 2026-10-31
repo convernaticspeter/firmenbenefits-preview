@@ -5,6 +5,7 @@ import { loadContent } from '../lib/content.mjs';
 import { anfrageMessages, betriebsratMessages, partnerMessages } from '../lib/messages.mjs';
 import { prepare, mosparoJson } from '../lib/mosparo.mjs';
 import { personalize, cleanFirma } from '../lib/firma.mjs';
+import { parseTasks, aggregate, renderDashboard, demoRecords } from '../lib/dashboard.mjs';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
@@ -146,4 +147,24 @@ test('Angebotsseite: Firmenname aus ?firma= statt Bezirken', () => {
     assert.ok(personalize(html, '<script>alert(1)</script>&"').includes('scriptalert(1)/script&amp;&quot;'));
   }
   assert.equal(cleanFirma('x'.repeat(200)).length, 80);
+});
+
+test('Dashboard: ClickUp-Tasks parsen und aggregieren, keine Personendaten', () => {
+  const now = new Date('2026-12-15T10:00:00Z');
+  const v = validate('anfrage', { ...anfrage, br: 'G042', utm_medium: 'email' }, { offers: offersBySlug }).values;
+  const t1 = anfrageMessages({ id: 'FB-2612-AAAAA', v, offer: offersBySlug['kuechen-schwechat'], site, now }).task;
+  const b = validate('betriebsrat', { organisation: 'BR Test', region: 'Wien', beschaeftigte: '51–250', name: 'Max', email: 'br@example.at', monatlich: 'ja' }).values;
+  const t2 = betriebsratMessages({ id: 'FB-2612-BBBBB', v: b, site, now, doiUrl: 'x', offers }).task;
+  const recs = parseTasks([{ markdown_description: t1.markdown, tags: [] }, { markdown_description: t2.markdown, tags: [{ name: 'fb-doi-bestaetigt' }] }, { description: 'ohne JSON' }]);
+  assert.equal(recs.length, 2);
+  const a = aggregate(recs, { offers, site, gremien: { g042: 'BR Muster' }, now });
+  assert.equal(a.anfragenTotal, 1); assert.equal(a.gremienRows[0].br, 'g042'); assert.equal(a.gremienRows[0].name, 'BR Muster');
+  assert.equal(a.brBestaetigt, 1); assert.equal(a.reichweite, 51);
+  assert.deepEqual(a.months, ['2026-11', '2026-12']);
+  assert.equal(a.perMonth['2026-12']['kuechen-schwechat'], 1);
+  assert.ok(!('personal-training-wien' in a.perMonth['2026-12']));
+  const html = renderDashboard(a, { offers, generatedAt: now });
+  for (const pii of ['Maria', 'Muster GmbH', 'maria@example.at', '660 1234567', 'br@example.at']) assert.ok(!html.includes(pii), pii);
+  const demo = demoRecords({ offers });
+  assert.ok(renderDashboard(aggregate(demo.records, { offers, site, gremien: demo.gremien, now: demo.now }), { demo: true, offers }).includes('Beispieldaten'));
 });

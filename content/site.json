@@ -2,6 +2,7 @@
   "name": "firmenbenefits.at",
   "canonicalHost": "firmenbenefits.at",
   "pilot": {
+    "start": "2026-11-01",
     "ende": "2027-02-01",
     "endeText": "1. Februar 2027",
     "regionen": ["wien", "baden", "bruck-an-der-leitha", "gaenserndorf", "moedling"]

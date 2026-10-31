@@ -38,3 +38,7 @@ Plausible-Events (nur auf firmenbenefits.at): `Anfrage gesendet` (props `angebot
 ```bash
 npm ci && npm test && npm run build && PORT=4311 node server.mjs
 ```
+
+## Dashboard (Pilot-Reporting)
+
+`node scripts/dashboard.mjs --out dashboard.html [--gremien gremien.json]` erzeugt aus der ClickUp-Liste (`CLICKUP_TOKEN`, `CLICKUP_LIST_ID`) ein eigenständiges HTML-Dashboard: Anfragen pro Monat und Partner, Anfragen je Gremium (`br`), Herkunft, Betriebsrat-Anmeldungen nach Region und Größe, Partner-Interessenten. Nur Summen, keine Personendaten. `gremien.json` ordnet `br` einem Namen zu (`{ "g001": "Betriebsrat …" }`) und liegt bewusst nicht im Repo. `--demo` erzeugt eine Vorschau mit Beispieldaten. Angebote mit `"auswertung": false` erscheinen nicht.
